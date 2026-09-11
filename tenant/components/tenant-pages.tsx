@@ -49,10 +49,8 @@ import {
   money,
   initials,
   duration,
-  demoDate,
-  type Appointment,
-  type Customer,
 } from '@/tenant/lib/demo-data';
+import type { Appointment, Customer } from '@/tenant/lib/api';
 import { minutes } from '@/tenant/lib/booking';
 import type { Editor } from './editors';
 type Props = { edit: (editor: Editor) => void; go: (page: string) => void };
@@ -133,7 +131,7 @@ export function AppointmentTable({
 }
 export function Overview({ edit, go }: Props) {
   const { data } = useWorkspace();
-  const today = data.appointments.filter((a) => a.date === demoDate);
+  const today = data.appointments.filter((a) => a.date === new Date().toISOString().slice(0, 10));
   const completed = today.filter((a) => a.status === 'Completed');
   const revenue = completed.reduce(
     (sum, a) =>
@@ -861,7 +859,7 @@ export function AppointmentsPage({ edit }: Props) {
 }
 export function CalendarPage({ edit }: Props) {
   const { data } = useWorkspace();
-  const [date, setDate] = useState(demoDate);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [member, setMember] = useState('all');
   const team = data.staff.filter(
     (s) => s.active && (member === 'all' || s.id === member),
@@ -889,7 +887,7 @@ export function CalendarPage({ edit }: Props) {
       </PageHead>
       <div className="toolbar">
         <div className="inline">
-          <button className="btn" onClick={() => setDate(demoDate)}>
+          <button className="btn" onClick={() => setDate(new Date().toISOString().slice(0, 10))}>
             Demo today
           </button>
           <button
@@ -1670,14 +1668,14 @@ export function SettingsPage() {
                 <Field label="Phone">
                   <input
                     type="tel"
-                    value={settings.phone}
+                    value={settings.phone ?? ''}
                     onChange={(e) => change('phone', e.target.value)}
                   />
                 </Field>
               </div>
               <Field label="Address">
                 <textarea
-                  value={settings.address}
+                  value={settings.address ?? ''}
                   onChange={(e) => change('address', e.target.value)}
                 />
               </Field>

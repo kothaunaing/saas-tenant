@@ -15,14 +15,9 @@ import { useWorkspace } from './workspace-provider';
 import {
   workingHours,
   duration,
-  demoDate,
   money,
-  type Staff,
-  type Customer,
-  type Service,
-  type Appointment,
 } from '@/tenant/lib/demo-data';
-import type { Reward } from '@/tenant/lib/api';
+import type { Staff, Customer, Service, Appointment, Reward } from '@/tenant/lib/api';
 import { bookingError, hoursError } from '@/tenant/lib/booking';
 export type Editor =
   | { type: 'staff'; record?: Staff }
@@ -92,7 +87,7 @@ export default function EditorSheet({
           customerId: data.customers[0]?.id ?? '',
           serviceId: data.services.find((s) => s.active)?.id ?? '',
           staffId: '',
-          date: demoDate,
+          date: new Date().toISOString().slice(0, 10),
           time: '10:00',
           status: 'Confirmed',
           notes: '',

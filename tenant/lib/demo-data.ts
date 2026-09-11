@@ -1,119 +1,31 @@
-export type Customer = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  visits: number;
-  noShow: number;
-  points: number;
-  spent: number;
-  last: string;
-  notes: string;
-};
-export type Service = {
-  id: string;
-  name: string;
-  category: string;
-  duration: number;
-  price: number;
-  active: boolean;
-  description: string;
-};
-export type WorkDay = {
-  day: string;
-  enabled: boolean;
-  start: string;
-  end: string;
-  breaks: { start: string; end: string }[];
-};
-export type Staff = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  active: boolean;
-  services: string[];
-  hours: WorkDay[];
-};
-export type Appointment = {
-  id: string;
-  customerId: string;
-  serviceId: string;
-  staffId: string;
-  date: string;
-  time: string;
-  status: string;
-  notes: string;
-};
+// Pure utility functions and fixtures shared across the tenant UI and tests.
+import type { WorkDay, Staff, Service, Appointment } from './api';
+
 export const workingHours = (): WorkDay[] =>
-  ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => ({
+  ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, dayOfWeek) => ({
+    dayOfWeek,
     day,
     enabled: day !== 'Sun',
     start: '09:00',
     end: '18:00',
     breaks: [],
   }));
-export const customers: Customer[] = [
-  [
-    'c1',
-    'Ei Ei Khaing',
-    'ei.khaing@example.com',
-    5,
-    0,
-    1240,
-    310,
-    '9 days ago',
-  ],
-  ['c2', 'Zin Mar Oo', 'zinmar.oo@example.com', 3, 0, 860, 280, '21 days ago'],
-  [
-    'c3',
-    'Htet Htet Lin',
-    'htet.lin@example.com',
-    5,
-    60,
-    180,
-    155,
-    '3 months ago',
-  ],
-  ['c4', 'Aung Kyaw Moe', 'aung.moe@example.com', 3, 0, 320, 170, '4 days ago'],
-  [
-    'c5',
-    'Phyu Phyu Win',
-    'phyu.win@example.com',
-    6,
-    0,
-    2100,
-    461,
-    '6 days ago',
-  ],
-  ['c6', 'Nilar Soe', 'nilar.soe@example.com', 1, 0, 40, 22, '2 days ago'],
-  [
-    'c7',
-    'Thandar Kyaw',
-    'thandar.kyaw@example.com',
-    4,
-    25,
-    640,
-    148,
-    '12 days ago',
-  ],
-  ['c8', 'Su Myat Noe', 'su.myat@example.com', 2, 0, 420, 105, 'Yesterday'],
-].map(([id, name, email, visits, noShow, points, spent, last], i) => ({
-  id: String(id),
-  name: String(name),
-  email: String(email),
-  phone: `+95 9 250 111 ${222 + i}`,
-  visits: Number(visits),
-  noShow: Number(noShow),
-  points: Number(points),
-  spent: Number(spent),
-  last: String(last),
-  notes:
-    i === 0
-      ? 'Prefers Hnin Wai. Sensitive skin — patch test before any new product.'
-      : '',
-}));
+
+export const money = (v: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
+
+export const initials = (name: string) =>
+  name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('');
+
+export const duration = (mins: number) =>
+  `${Math.floor(mins / 60) ? `${Math.floor(mins / 60)} hr` : ''}${mins % 60 ? ` ${mins % 60} min` : ''}`.trim();
+
+export const demoDate = '2026-08-07';
+
 export const services: Service[] = [
   {
     id: 's1',
@@ -179,6 +91,7 @@ export const services: Service[] = [
     description: 'Rich, dimensional color and deep conditioning.',
   },
 ];
+
 export const staff: Staff[] = [
   'Nandar Aye',
   'Thiri Ko',
@@ -205,7 +118,7 @@ export const staff: Staff[] = [
   ][i],
   hours: workingHours(),
 }));
-export const demoDate = '2026-08-07';
+
 export const appointments: Appointment[] = [
   ['a1', 'c1', 's1', 't5', '09:00', 'Completed'],
   ['a2', 'c5', 's4', 't1', '09:30', 'Completed'],
@@ -225,15 +138,3 @@ export const appointments: Appointment[] = [
   date: demoDate,
   notes: '',
 }));
-export const money = (v: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-    v,
-  );
-export const initials = (name: string) =>
-  name
-    .split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('');
-export const duration = (mins: number) =>
-  `${Math.floor(mins / 60) ? `${Math.floor(mins / 60)} hr` : ''}${mins % 60 ? ` ${mins % 60} min` : ''}`.trim();

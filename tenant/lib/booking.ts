@@ -1,4 +1,4 @@
-import type { Appointment, Staff, Service } from './demo-data';
+import type { Appointment, Staff, Service } from './api';
 export const minutes = (time: string) => {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
@@ -56,7 +56,7 @@ export function hoursError(hours: Staff['hours']) {
       if (b.start >= b.end || b.start < day.start || b.end > day.end)
         return `${day.day}: breaks must fit inside working hours.`;
     }
-    const sorted = [...day.breaks].sort((a, b) =>
+    const sorted = [...day.breaks].sort((a: { start: string }, b: { start: string }) =>
       a.start.localeCompare(b.start),
     );
     if (sorted.some((b, i) => i > 0 && b.start < sorted[i - 1].end))

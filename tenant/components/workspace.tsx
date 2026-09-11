@@ -104,10 +104,12 @@ export default function Workspace({
 }: {
   initialPage?: string;
 }) {
-  const { data } = useWorkspace();
+  const { data, user, signOut } = useWorkspace();
   const router = useRouter();
   const [editor, setEditor] = useState<Editor | null>(null);
   const go = (page: string) => router.push(pagePath(page));
+  const initials = (name: string) =>
+    name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
   useEffect(() => {
     type ModelContext = {
       registerTool: (
@@ -175,7 +177,9 @@ export default function Workspace({
           <div className="plan-mini">
             <div className="inline">
               <Sparkles size={14} className="pink" />
-              <strong className="text-xs">A little room to grow</strong>
+              <strong className="text-xs">
+                {data.settings.plan ?? 'Free plan'}
+              </strong>
             </div>
             <p>More possibilities for your salon.</p>
             <button className="btn full small" onClick={() => go('Billing')}>
@@ -187,12 +191,21 @@ export default function Workspace({
             className="person p-3 text-left"
             onClick={() => go('Settings')}
           >
-            <span className="avatar rose">MZ</span>
+            <span className="avatar rose">
+              {user ? initials(user.name) : '?'}
+            </span>
             <div>
-              <strong>May Zin</strong>
-              <small>Workspace manager</small>
+              <strong>{user?.name ?? '—'}</strong>
+              <small>{user?.role === 'TENANT_ADMIN' ? 'Salon admin' : user?.role ?? ''}</small>
             </div>
             <ChevronDown size={12} className="ml-auto muted" />
+          </button>
+          <button
+            className="btn full small"
+            style={{ marginTop: 4 }}
+            onClick={signOut}
+          >
+            Sign out
           </button>
         </SidebarFooter>
       </Sidebar>
@@ -206,12 +219,6 @@ export default function Workspace({
             </div>
           </div>
           <div className="topbar-right">
-            <span
-              className="demo-badge"
-              title="Sample data. Changes reset when the page is refreshed."
-            >
-              Demo workspace
-            </span>
             <Popover>
               <PopoverTrigger
                 aria-label="Notifications"
@@ -227,8 +234,10 @@ export default function Workspace({
                 </p>
               </PopoverContent>
             </Popover>
-            <span className="avatar">MZ</span>
-            <span>May Zin</span>
+            <span className="avatar">
+              {user ? initials(user.name) : '?'}
+            </span>
+            <span>{user?.name ?? '—'}</span>
           </div>
         </header>
         <main className="page">

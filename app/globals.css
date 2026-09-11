@@ -1365,3 +1365,360 @@ a:focus-visible {
   outline: 2px solid #f6307860;
   outline-offset: 1px;
 }
+
+/* ─── Tenant Login Page (Light Aesthetic) ────────────────────────────────── */
+.tenant-login-root {
+  min-height: 100svh;
+  position: relative;
+  overflow-x: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background-color: #f7f8fa;
+  color: #191a20;
+  box-sizing: border-box;
+}
+
+/* Subtle ambient glowing orbs */
+.login-ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.login-ambient-orb.orb-1 {
+  top: -120px;
+  right: -60px;
+  width: 580px;
+  height: 580px;
+  background: radial-gradient(circle, rgba(246, 48, 120, 0.08) 0%, rgba(254, 235, 242, 0.5) 45%, transparent 70%);
+  filter: blur(60px);
+  animation: orbFloat1 18s ease-in-out infinite alternate;
+}
+
+.login-ambient-orb.orb-2 {
+  bottom: -140px;
+  left: -80px;
+  width: 540px;
+  height: 540px;
+  background: radial-gradient(circle, rgba(219, 234, 254, 0.55) 0%, rgba(238, 242, 255, 0.3) 50%, transparent 70%);
+  filter: blur(65px);
+  animation: orbFloat2 22s ease-in-out infinite alternate;
+}
+
+.login-grid-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(ellipse at 50% 50%, #000 65%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 65%, transparent 100%);
+}
+
+/* Centered card container */
+.tenant-login-container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+}
+
+.tenant-login-card {
+  background: #ffffff;
+  border: 1px solid #e7e7ec;
+  box-shadow:
+    0 20px 45px -10px rgba(22, 23, 30, 0.07),
+    0 1px 3px rgba(0, 0, 0, 0.02);
+  border-radius: 20px;
+  padding: 38px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.login-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.login-logo-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #f63078 0%, #e02469 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(246, 48, 120, 0.28);
+  flex-shrink: 0;
+}
+
+.login-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fdf2f6;
+  border: 1px solid #f9d5e3;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #d82468;
+  margin-bottom: 6px;
+  width: fit-content;
+}
+
+.tenant-login-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #191a20;
+  letter-spacing: -0.5px;
+  margin: 0 0 4px;
+}
+
+.tenant-login-sub {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #6d6e7a;
+  margin: 0;
+}
+
+/* Form controls */
+.tenant-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.tenant-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #34353d;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-prefix-icon {
+  position: absolute;
+  left: 14px;
+  color: #9496a1;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.input-with-icon input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #dcdee5;
+  border-radius: 10px;
+  padding: 11px 14px 11px 40px;
+  font-size: 13.5px;
+  color: #191a20;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input-with-icon input:focus {
+  border-color: #f63078;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(246, 48, 120, 0.12);
+}
+
+.input-with-icon:focus-within .input-prefix-icon {
+  color: #f63078;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 11px;
+  background: transparent;
+  border: none;
+  color: #8c8e99;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #24252c;
+}
+
+/* Error message */
+.tenant-login-error {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 12px;
+  line-height: 1.45;
+  animation: errorShake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.tenant-login-error .error-icon {
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+/* Submit button */
+.tenant-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 44px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #f63078 0%, #da1b60 100%);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(246, 48, 120, 0.25);
+  transition: all 0.2s ease;
+}
+
+.tenant-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(246, 48, 120, 0.35);
+  filter: brightness(1.02);
+}
+
+.tenant-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.tenant-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+/* Card footer */
+.login-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 2px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f4;
+  text-align: center;
+}
+
+.login-portal-switch {
+  font-size: 12px;
+  color: #6d6e7a;
+  margin: 0;
+}
+
+.switch-link {
+  color: #f63078;
+  font-weight: 500;
+  text-decoration: none;
+  margin-left: 3px;
+  transition: color 0.15s ease;
+}
+
+.switch-link:hover {
+  color: #d82468;
+  text-decoration: underline;
+}
+
+.login-security-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #8c8e99;
+}
+
+/* Keyframes */
+@keyframes orbFloat1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-40px, 30px) scale(1.08); }
+}
+
+@keyframes orbFloat2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(35px, -35px) scale(1.1); }
+}
+
+@keyframes errorShake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+  40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .tenant-login-root {
+    padding: 24px 14px;
+  }
+  .tenant-login-card {
+    padding: 28px 20px;
+    border-radius: 18px;
+  }
+  .tenant-login-title {
+    font-size: 20px;
+  }
+}
+
