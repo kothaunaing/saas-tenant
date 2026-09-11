@@ -36,7 +36,7 @@ export interface CreateStaffPayload {
   hours?: WorkDay[];
 }
 
-export interface UpdateStaffPayload extends Partial<CreateStaffPayload> {}
+export type UpdateStaffPayload = Partial<CreateStaffPayload>;
 
 export const staffKey = (slug: string, params?: QueryStaffParams) =>
   ['tenant', slug, 'staff', params] as const;

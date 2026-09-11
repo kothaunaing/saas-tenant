@@ -27,7 +27,7 @@ export interface CreateCustomerPayload {
   notes?: string;
 }
 
-export interface UpdateCustomerPayload extends Partial<CreateCustomerPayload> {}
+export type UpdateCustomerPayload = Partial<CreateCustomerPayload>;
 
 export const customersKey = (slug: string, params?: QueryCustomersParams) =>
   ['tenant', slug, 'customers', params] as const;

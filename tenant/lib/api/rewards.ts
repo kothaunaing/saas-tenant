@@ -21,7 +21,7 @@ export interface CreateRewardPayload {
   active?: boolean;
 }
 
-export interface UpdateRewardPayload extends Partial<CreateRewardPayload> {}
+export type UpdateRewardPayload = Partial<CreateRewardPayload>;
 
 export const rewardsKey = (slug: string, params?: QueryRewardsParams) =>
   ['tenant', slug, 'rewards', params] as const;

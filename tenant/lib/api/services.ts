@@ -26,7 +26,7 @@ export interface CreateServicePayload {
   description?: string;
 }
 
-export interface UpdateServicePayload extends Partial<CreateServicePayload> {}
+export type UpdateServicePayload = Partial<CreateServicePayload>;
 
 export const servicesKey = (slug: string, params?: QueryServicesParams) =>
   ['tenant', slug, 'services', params] as const;

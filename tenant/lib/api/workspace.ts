@@ -42,7 +42,14 @@ export async function saveWorkspace(
 ): Promise<WorkspaceData> {
   const payload = {
     ...data,
-    customers: data.customers.map(({ visits, noShow, spent, last, ...c }) => c),
+    customers: data.customers.map((customer) => ({
+      id: customer.id,
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      points: customer.points,
+      notes: customer.notes,
+    })),
   };
   const res = await api.put<WorkspaceData>(
     `/tenants/${slug}/workspace`,

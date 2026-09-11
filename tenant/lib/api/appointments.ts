@@ -50,7 +50,7 @@ export interface CreateAppointmentPayload {
   notes?: string;
 }
 
-export interface UpdateAppointmentPayload extends Partial<CreateAppointmentPayload> {}
+export type UpdateAppointmentPayload = Partial<CreateAppointmentPayload>;
 
 export const appointmentsKey = (slug: string, params?: QueryAppointmentsParams) =>
   ['tenant', slug, 'appointments', params] as const;
