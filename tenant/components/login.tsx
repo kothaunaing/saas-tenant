@@ -49,9 +49,9 @@ export default function LoginPage() {
         await logout();
         const portalHint =
           authUser.role === "CUSTOMER"
-            ? " Use the Customer Portal (localhost:3001) to book appointments."
+            ? " Use the Customer Portal (https://saas-customer-lilac.vercel.app) to book appointments."
             : authUser.role === "PLATFORM_ADMIN"
-              ? " Use the Super Admin Console (localhost:3002) instead."
+              ? " Use the Super Admin Console (https://saas-provider-opal.vercel.app) instead."
               : "";
         throw new Error(
           `Access denied. Please sign in with a salon admin account.${portalHint}`,
@@ -181,7 +181,7 @@ export default function LoginPage() {
             <p className="login-portal-switch">
               Looking for client booking?{" "}
               <a
-                href="http://localhost:3001"
+                href="https://saas-customer-lilac.vercel.app"
                 className="switch-link"
                 target="_blank"
                 rel="noreferrer"
@@ -190,7 +190,7 @@ export default function LoginPage() {
               </a>
               {" | "}
               <a
-                href="http://localhost:3002"
+                href="https://saas-provider-opal.vercel.app"
                 className="switch-link"
                 target="_blank"
                 rel="noreferrer"
