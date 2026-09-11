@@ -1,4 +1,4 @@
-import { api, type PaginatedResult, type PaginationParams } from './client';
+import { api, type PaginatedResult, type PaginationParams } from "./client";
 
 export type Customer = {
   id: string;
@@ -30,7 +30,7 @@ export interface CreateCustomerPayload {
 export type UpdateCustomerPayload = Partial<CreateCustomerPayload>;
 
 export const customersKey = (slug: string, params?: QueryCustomersParams) =>
-  ['tenant', slug, 'customers', params] as const;
+  ["tenant", slug, "customers", params] as const;
 
 export async function getCustomers(
   slug: string,
@@ -43,10 +43,7 @@ export async function getCustomers(
   return res.data;
 }
 
-export async function getCustomer(
-  slug: string,
-  id: string,
-): Promise<Customer> {
+export async function getCustomer(slug: string, id: string): Promise<Customer> {
   const res = await api.get<Customer>(`/tenants/${slug}/customers/${id}`);
   return res.data;
 }
@@ -55,10 +52,7 @@ export async function createCustomer(
   slug: string,
   payload: CreateCustomerPayload,
 ): Promise<Customer> {
-  const res = await api.post<Customer>(
-    `/tenants/${slug}/customers`,
-    payload,
-  );
+  const res = await api.post<Customer>(`/tenants/${slug}/customers`, payload);
   return res.data;
 }
 

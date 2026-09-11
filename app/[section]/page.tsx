@@ -1,15 +1,16 @@
-import Workspace from '@/tenant/components/workspace';
+import Workspace from "@/tenant/components/workspace";
 export function generateStaticParams() {
   return [
-    'calendar',
-    'appointments',
-    'customers',
-    'services',
-    'staff',
-    'loyalty',
-    'analytics',
-    'billing',
-    'settings',
+    "calendar",
+    "appointments",
+    "customers",
+    "services",
+    "staff",
+    "loyalty",
+    "analytics",
+    "billing",
+    "settings",
+    "support",
   ].map((section) => ({ section }));
 }
 export const dynamicParams = false;

@@ -1,30 +1,32 @@
-'use client';
-import { useState } from 'react';
-import { Plus, X, CalendarDays } from 'lucide-react';
+"use client";
+import { useState } from "react";
+import { Plus, X, CalendarDays } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Field, Choice } from './tenant-ui';
-import { useWorkspace } from './workspace-provider';
-import {
-  workingHours,
-  duration,
-  money,
-} from '@/tenant/lib/demo-data';
-import type { Staff, Customer, Service, Appointment, Reward } from '@/tenant/lib/api';
-import { bookingError, hoursError } from '@/tenant/lib/booking';
+} from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, Choice } from "./tenant-ui";
+import { useWorkspace } from "./workspace-provider";
+import { workingHours, duration, money } from "@/tenant/lib/domain";
+import type {
+  Staff,
+  Customer,
+  Service,
+  Appointment,
+  Reward,
+} from "@/tenant/lib/api";
+import { bookingError, hoursError } from "@/tenant/lib/booking";
 export type Editor =
-  | { type: 'staff'; record?: Staff }
-  | { type: 'customer'; record?: Customer }
-  | { type: 'service'; record?: Service }
-  | { type: 'appointment'; record?: Appointment }
-  | { type: 'reward'; record?: Reward };
+  | { type: "staff"; record?: Staff }
+  | { type: "customer"; record?: Customer }
+  | { type: "service"; record?: Service }
+  | { type: "appointment"; record?: Appointment }
+  | { type: "reward"; record?: Reward };
 const uid = () => crypto.randomUUID();
 export default function EditorSheet({
   editor,
@@ -34,84 +36,84 @@ export default function EditorSheet({
   onClose: () => void;
 }) {
   const { data, save, pending } = useWorkspace();
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const type = editor.type;
   const [person, setPerson] = useState<Staff>(() =>
-    editor.type === 'staff' && editor.record
+    editor.type === "staff" && editor.record
       ? structuredClone(editor.record)
       : {
           id: uid(),
-          name: '',
-          email: '',
-          phone: '',
-          role: 'Staff',
+          name: "",
+          email: "",
+          phone: "",
+          role: "Staff",
           active: true,
           services: [],
           hours: workingHours(),
         },
   );
   const [customer, setCustomer] = useState<Customer>(() =>
-    editor.type === 'customer' && editor.record
+    editor.type === "customer" && editor.record
       ? { ...editor.record }
       : {
           id: uid(),
-          name: '',
-          email: '',
-          phone: '',
+          name: "",
+          email: "",
+          phone: "",
           visits: 0,
           noShow: 0,
           points: 0,
           spent: 0,
-          last: 'Not visited yet',
-          notes: '',
+          last: "Not visited yet",
+          notes: "",
         },
   );
   const [service, setService] = useState<Service>(() =>
-    editor.type === 'service' && editor.record
+    editor.type === "service" && editor.record
       ? { ...editor.record }
       : {
           id: uid(),
-          name: '',
-          category: 'Facial',
+          name: "",
+          category: "Facial",
           duration: 60,
           price: 0,
           active: true,
-          description: '',
+          description: "",
         },
   );
   const [booking, setBooking] = useState<Appointment>(() =>
-    editor.type === 'appointment' && editor.record
+    editor.type === "appointment" && editor.record
       ? { ...editor.record }
       : {
           id: uid(),
-          customerId: data.customers[0]?.id ?? '',
-          serviceId: data.services.find((s) => s.active)?.id ?? '',
-          staffId: '',
+          customerId: data.customers[0]?.id ?? "",
+          serviceId: data.services.find((s) => s.active)?.id ?? "",
+          staffId: "",
           date: new Date().toISOString().slice(0, 10),
-          time: '10:00',
-          status: 'Confirmed',
-          notes: '',
+          time: "10:00",
+          status: "Confirmed",
+          notes: "",
         },
   );
   const [reward, setReward] = useState<Reward>(() =>
-    editor.type === 'reward' && editor.record
+    editor.type === "reward" && editor.record
       ? { ...editor.record }
-      : { id: uid(), name: '', points: 500, description: '', active: true },
+      : { id: uid(), name: "", points: 500, description: "", active: true },
   );
   const isEdit = !!editor.record;
-  const title = `${isEdit ? 'Edit' : 'Add'} ${type === 'staff' ? 'staff member' : type === 'appointment' ? 'appointment' : type}`;
+  const title = `${isEdit ? "Edit" : "Add"} ${type === "staff" ? "staff member" : type === "appointment" ? "appointment" : type}`;
   const submit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setError("");
     const updated = { ...data };
-    if (type === 'staff') {
+    if (type === "staff") {
       const err = hoursError(person.hours);
       if (err) return setError(err);
       if (!person.name.trim())
-        return setError('Enter the staff member’s name.');
+        return setError("Enter the staff member’s name.");
       if (person.active && !person.services.length)
         return setError(
-          'Assign at least one service to an active team member.',
+          "Assign at least one service to an active team member.",
         );
       updated.staff = isEdit
         ? data.staff.map((s) =>
@@ -119,8 +121,8 @@ export default function EditorSheet({
           )
         : [...data.staff, { ...person, name: person.name.trim() }];
     }
-    if (type === 'customer') {
-      if (!customer.name.trim()) return setError('Enter a customer name.');
+    if (type === "customer") {
+      if (!customer.name.trim()) return setError("Enter a customer name.");
       if (
         data.customers.some(
           (c) =>
@@ -128,7 +130,7 @@ export default function EditorSheet({
             c.email.toLowerCase() === customer.email.toLowerCase(),
         )
       )
-        return setError('A customer with this email already exists.');
+        return setError("A customer with this email already exists.");
       updated.customers = isEdit
         ? data.customers.map((c) =>
             c.id === customer.id
@@ -137,16 +139,16 @@ export default function EditorSheet({
           )
         : [...data.customers, { ...customer, name: customer.name.trim() }];
     }
-    if (type === 'service') {
+    if (type === "service") {
       if (!service.name.trim() || service.duration < 15 || service.price < 0)
         return setError(
-          'Enter a service name, a duration of at least 15 minutes, and a valid price.',
+          "Enter a service name, a duration of at least 15 minutes, and a valid price.",
         );
       updated.services = isEdit
         ? data.services.map((s) => (s.id === service.id ? service : s))
         : [...data.services, service];
     }
-    if (type === 'appointment') {
+    if (type === "appointment") {
       const err = bookingError(
         booking,
         data.appointments,
@@ -158,9 +160,9 @@ export default function EditorSheet({
         ? data.appointments.map((a) => (a.id === booking.id ? booking : a))
         : [...data.appointments, booking];
     }
-    if (type === 'reward') {
+    if (type === "reward") {
       if (!reward.name.trim() || reward.points < 1)
-        return setError('Enter a reward name and at least one point.');
+        return setError("Enter a reward name and at least one point.");
       updated.rewards = isEdit
         ? data.rewards.map((r) => (r.id === reward.id ? reward : r))
         : [...data.rewards, reward];
@@ -168,11 +170,11 @@ export default function EditorSheet({
     try {
       await save(
         updated,
-        `${isEdit ? 'Changes saved' : type === 'appointment' ? 'Appointment created' : type === 'staff' ? 'Team member added' : `${type.charAt(0).toUpperCase() + type.slice(1)} added`}. Demo changes reset on refresh.`,
+        `${isEdit ? "Changes saved" : type === "appointment" ? "Appointment created" : type === "staff" ? "Team member added" : `${type.charAt(0).toUpperCase() + type.slice(1)} added`}.`,
       );
       onClose();
     } catch {
-      setError('Your changes could not be saved. Please try again.');
+      setError("Your changes could not be saved. Please try again.");
     }
   };
   const available = data.staff.filter(
@@ -189,16 +191,16 @@ export default function EditorSheet({
         <SheetHeader className="editor-head">
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>
-            {type === 'staff'
-              ? 'Manage their services, availability, and working hours.'
-              : type === 'appointment'
-                ? 'Find a little time for your customer’s next visit.'
+            {type === "staff"
+              ? "Manage their services, availability, and working hours."
+              : type === "appointment"
+                ? "Find a little time for your customer’s next visit."
                 : `Keep your ${type} details up to date.`}
           </SheetDescription>
         </SheetHeader>
         <form onSubmit={submit} className="editor-form">
           <div className="editor-body">
-            {type === 'staff' && (
+            {type === "staff" && (
               <>
                 <div className="field-grid">
                   <Field label="Full name">
@@ -342,7 +344,7 @@ export default function EditorSheet({
                                         ...h,
                                         breaks: [
                                           ...h.breaks,
-                                          { start: '12:00', end: '13:00' },
+                                          { start: "12:00", end: "13:00" },
                                         ],
                                       }
                                     : h,
@@ -362,7 +364,7 @@ export default function EditorSheet({
                       day.breaks.map((b, bi) => (
                         <div className="break-line" key={bi}>
                           <span>Break</span>
-                          {(['start', 'end'] as const).map((key) => (
+                          {(["start", "end"] as const).map((key) => (
                             <input
                               key={key}
                               aria-label={`${day.day} break ${bi + 1} ${key}`}
@@ -415,7 +417,7 @@ export default function EditorSheet({
                 ))}
               </>
             )}
-            {type === 'customer' && (
+            {type === "customer" && (
               <>
                 <Field label="Full name">
                   <input
@@ -459,7 +461,7 @@ export default function EditorSheet({
                 </Field>
               </>
             )}
-            {type === 'service' && (
+            {type === "service" && (
               <>
                 <Field label="Service name">
                   <input
@@ -478,7 +480,7 @@ export default function EditorSheet({
                     onChange={(category) =>
                       setService({ ...service, category })
                     }
-                    options={['Facial', 'Hair', 'Body', 'Massage', 'Nails']}
+                    options={["Facial", "Hair", "Body", "Massage", "Nails"]}
                     className="w-full"
                   />
                 </Field>
@@ -541,7 +543,7 @@ export default function EditorSheet({
                 </p>
               </>
             )}
-            {type === 'appointment' && (
+            {type === "appointment" && (
               <>
                 <Field label="Customer">
                   <Choice
@@ -561,7 +563,7 @@ export default function EditorSheet({
                   <Choice
                     value={booking.serviceId}
                     onChange={(serviceId) =>
-                      setBooking({ ...booking, serviceId, staffId: '' })
+                      setBooking({ ...booking, serviceId, staffId: "" })
                     }
                     options={data.services
                       .filter((s) => s.active || s.id === booking.serviceId)
@@ -578,7 +580,7 @@ export default function EditorSheet({
                     value={booking.staffId}
                     onChange={(staffId) => setBooking({ ...booking, staffId })}
                     options={[
-                      { value: '', label: 'Choose a qualified team member' },
+                      { value: "", label: "Choose a qualified team member" },
                       ...available.map((s) => ({ value: s.id, label: s.name })),
                     ]}
                     label="Team member"
@@ -617,12 +619,12 @@ export default function EditorSheet({
                     value={booking.status}
                     onChange={(status) => setBooking({ ...booking, status })}
                     options={[
-                      'Pending',
-                      'Confirmed',
-                      'In progress',
-                      'Completed',
-                      'Cancelled',
-                      'No-show',
+                      "Pending",
+                      "Confirmed",
+                      "In progress",
+                      "Completed",
+                      "Cancelled",
+                      "No-show",
                     ]}
                     label="Appointment status"
                     className="w-full"
@@ -649,7 +651,7 @@ export default function EditorSheet({
                 </div>
               </>
             )}
-            {type === 'reward' && (
+            {type === "reward" && (
               <>
                 <Field label="Reward name">
                   <input
@@ -703,13 +705,13 @@ export default function EditorSheet({
             </button>
             <button type="submit" className="btn primary" disabled={pending}>
               {pending
-                ? 'Saving…'
+                ? "Saving…"
                 : isEdit
-                  ? 'Save changes'
-                  : type === 'staff'
-                    ? 'Add member'
-                    : type === 'appointment'
-                      ? 'Create appointment'
+                  ? "Save changes"
+                  : type === "staff"
+                    ? "Add member"
+                    : type === "appointment"
+                      ? "Create appointment"
                       : `Add ${type}`}
             </button>
           </footer>

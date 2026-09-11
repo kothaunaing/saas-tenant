@@ -1,4 +1,4 @@
-import { api, type PaginatedResult, type PaginationParams } from './client';
+import { api, type PaginatedResult, type PaginationParams } from "./client";
 
 export type Service = {
   id: string;
@@ -29,7 +29,7 @@ export interface CreateServicePayload {
 export type UpdateServicePayload = Partial<CreateServicePayload>;
 
 export const servicesKey = (slug: string, params?: QueryServicesParams) =>
-  ['tenant', slug, 'services', params] as const;
+  ["tenant", slug, "services", params] as const;
 
 export async function getServices(
   slug: string,
@@ -42,10 +42,7 @@ export async function getServices(
   return res.data;
 }
 
-export async function getService(
-  slug: string,
-  id: string,
-): Promise<Service> {
+export async function getService(slug: string, id: string): Promise<Service> {
   const res = await api.get<Service>(`/tenants/${slug}/services/${id}`);
   return res.data;
 }

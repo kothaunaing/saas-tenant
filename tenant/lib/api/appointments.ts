@@ -1,4 +1,4 @@
-import { api, type PaginatedResult, type PaginationParams } from './client';
+import { api, type PaginatedResult, type PaginationParams } from "./client";
 
 export type Appointment = {
   id: string;
@@ -52,8 +52,10 @@ export interface CreateAppointmentPayload {
 
 export type UpdateAppointmentPayload = Partial<CreateAppointmentPayload>;
 
-export const appointmentsKey = (slug: string, params?: QueryAppointmentsParams) =>
-  ['tenant', slug, 'appointments', params] as const;
+export const appointmentsKey = (
+  slug: string,
+  params?: QueryAppointmentsParams,
+) => ["tenant", slug, "appointments", params] as const;
 
 export async function getAppointments(
   slug: string,

@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api } from "./client";
 
 export type AuthUser = {
   id: string;
@@ -6,13 +6,14 @@ export type AuthUser = {
   name: string;
   role: string;
   tenantId: string | null;
+  tenantSlug: string | null;
 };
 
 export async function login(
   email: string,
   password: string,
 ): Promise<AuthUser> {
-  const res = await api.post<{ user: AuthUser }>('/auth/login', {
+  const res = await api.post<{ user: AuthUser }>("/auth/login", {
     email,
     password,
   });
@@ -20,10 +21,10 @@ export async function login(
 }
 
 export async function logout(): Promise<void> {
-  await api.post('/auth/logout');
+  await api.post("/auth/logout");
 }
 
 export async function getMe(): Promise<AuthUser> {
-  const res = await api.get<AuthUser>('/auth/me');
+  const res = await api.get<AuthUser>("/auth/me");
   return res.data;
 }

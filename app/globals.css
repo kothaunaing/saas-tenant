@@ -1,6 +1,6 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -321,7 +321,7 @@ svg {
   gap: 16px;
   font-size: 12px;
 }
-.demo-badge {
+.mode-badge {
   background: #f7f7f8;
   color: #898991;
   border: 1px solid #ededf0;
@@ -725,7 +725,7 @@ svg {
   border-radius: 4px;
   color: #82828c;
 }
-.tabs-compact button[data-active='true'] {
+.tabs-compact button[data-active="true"] {
   background: #f4f4f6;
   color: #2e2e36;
   font-weight: 600;
@@ -1200,7 +1200,7 @@ svg {
   .topbar {
     padding: 0 23px;
   }
-  .topbar-right .demo-badge {
+  .topbar-right .mode-badge {
     display: none;
   }
 }
@@ -1337,23 +1337,23 @@ svg {
   margin-left: 12px;
   color: #999;
 }
-.data-table [data-slot='table-row'] {
+.data-table [data-slot="table-row"] {
   height: auto;
 }
-.data-table [data-slot='table-head'] {
+.data-table [data-slot="table-head"] {
   height: 44px;
 }
-.data-table [data-slot='table-cell'] {
+.data-table [data-slot="table-cell"] {
   padding: 16px 19px;
 }
-.field [data-slot='select-trigger'] {
+.field [data-slot="select-trigger"] {
   font-size: 12px;
   min-height: 37px;
 }
-.page [data-slot='progress-track'] {
+.page [data-slot="progress-track"] {
   height: 6px;
 }
-.page [data-slot='progress-indicator'] {
+.page [data-slot="progress-indicator"] {
   border-radius: 6px;
 }
 button:focus-visible,
@@ -1393,7 +1393,12 @@ a:focus-visible {
   right: -60px;
   width: 580px;
   height: 580px;
-  background: radial-gradient(circle, rgba(246, 48, 120, 0.08) 0%, rgba(254, 235, 242, 0.5) 45%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(246, 48, 120, 0.08) 0%,
+    rgba(254, 235, 242, 0.5) 45%,
+    transparent 70%
+  );
   filter: blur(60px);
   animation: orbFloat1 18s ease-in-out infinite alternate;
 }
@@ -1403,7 +1408,12 @@ a:focus-visible {
   left: -80px;
   width: 540px;
   height: 540px;
-  background: radial-gradient(circle, rgba(219, 234, 254, 0.55) 0%, rgba(238, 242, 255, 0.3) 50%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(219, 234, 254, 0.55) 0%,
+    rgba(238, 242, 255, 0.3) 50%,
+    transparent 70%
+  );
   filter: blur(65px);
   animation: orbFloat2 22s ease-in-out infinite alternate;
 }
@@ -1418,7 +1428,11 @@ a:focus-visible {
     linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
   background-size: 36px 36px;
   mask-image: radial-gradient(ellipse at 50% 50%, #000 65%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 65%, transparent 100%);
+  -webkit-mask-image: radial-gradient(
+    ellipse at 50% 50%,
+    #000 65%,
+    transparent 100%
+  );
 }
 
 /* Centered card container */
@@ -1687,25 +1701,50 @@ a:focus-visible {
 
 /* Keyframes */
 @keyframes orbFloat1 {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-40px, 30px) scale(1.08); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-40px, 30px) scale(1.08);
+  }
 }
 
 @keyframes orbFloat2 {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(35px, -35px) scale(1.1); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(35px, -35px) scale(1.1);
+  }
 }
 
 @keyframes errorShake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
-  40%, 60% { transform: translate3d(3px, 0, 0); }
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-3px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(3px, 0, 0);
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive adjustments */
@@ -1721,4 +1760,3 @@ a:focus-visible {
     font-size: 20px;
   }
 }
-

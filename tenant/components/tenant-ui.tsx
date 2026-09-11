@@ -1,12 +1,12 @@
-'use client';
-import { Search, ArrowUpRight, Inbox, type LucideIcon } from 'lucide-react';
+"use client";
+import { Search, ArrowUpRight, Inbox, type LucideIcon } from "lucide-react";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableHeader,
@@ -14,8 +14,8 @@ import {
   TableRow,
   TableBody,
   TableCell,
-} from '@/components/ui/table';
-import { initials } from '@/tenant/lib/demo-data';
+} from "@/components/ui/table";
+import { initials, money } from "@/tenant/lib/domain";
 export { Table, TableHeader, TableHead, TableRow, TableBody, TableCell };
 export function Person({
   name,
@@ -28,7 +28,7 @@ export function Person({
 }) {
   return (
     <div className="person">
-      <span className={`avatar ${tint ? 'rose' : ''}`}>{initials(name)}</span>
+      <span className={`avatar ${tint ? "rose" : ""}`}>{initials(name)}</span>
       <div>
         <strong>{name}</strong>
         {email && <small>{email}</small>}
@@ -37,15 +37,15 @@ export function Person({
   );
 }
 export function Badge({ status }: { status: string }) {
-  const color = ['Completed', 'Confirmed', 'Active', 'Paid'].includes(status)
-    ? 'green'
-    : ['Pending', 'Manager'].includes(status)
-      ? 'orange'
-      : ['In progress', 'Owner'].includes(status)
-        ? 'blue'
-        : ['Cancelled', 'No-show', 'Inactive'].includes(status)
-          ? 'red'
-          : '';
+  const color = ["Completed", "Confirmed", "Active", "Paid"].includes(status)
+    ? "green"
+    : ["Pending", "Manager"].includes(status)
+      ? "orange"
+      : ["In progress", "Owner"].includes(status)
+        ? "blue"
+        : ["Cancelled", "No-show", "Inactive"].includes(status)
+          ? "red"
+          : "";
   return (
     <span className={`badge ${color}`}>
       <i className="dot" />
@@ -116,7 +116,7 @@ export function Stat({
 export function SearchBox({
   value,
   onChange,
-  placeholder = 'Search by name or email…',
+  placeholder = "Search by name or email…",
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -139,7 +139,7 @@ export function Choice({
   onChange,
   options,
   label,
-  className = '',
+  className = "",
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -148,7 +148,7 @@ export function Choice({
   className?: string;
 }) {
   const opts = options.map((o) =>
-    typeof o === 'string' ? { value: o, label: o } : o,
+    typeof o === "string" ? { value: o, label: o } : o,
   );
   return (
     <Select
@@ -175,8 +175,8 @@ export function Choice({
   );
 }
 export function Empty({
-  title = 'No results found',
-  description = 'Try a different search or filter.',
+  title = "No results found",
+  description = "Try a different search or filter.",
 }: {
   title?: string;
   description?: string;
@@ -203,26 +203,36 @@ export function Field({
     </label>
   );
 }
-export function RevenueChart({ period = 7 }: { period?: number }) {
-  const paths: Record<number, string> = {
-    7: 'M0 140 C45 110 70 70 115 90 S195 140 230 105 S305 27 350 50 S430 90 470 45 S540 5 585 28 S625 38 650 30',
-    30: 'M0 160 C45 130 70 105 115 115 S195 155 230 120 S305 55 350 65 S430 105 470 55 S540 25 585 35 S625 48 650 55',
-    90: 'M0 165 C60 160 65 110 115 130 S190 100 230 118 S300 90 350 100 S410 40 470 70 S535 30 585 45 S625 15 650 10',
-  };
-  const path = paths[period] ?? paths[7];
+export function RevenueChart({
+  data,
+}: {
+  data: { date: string; revenue: number }[];
+}) {
+  const max = Math.max(1, ...data.map((row) => row.revenue));
+  const points = data
+    .map(
+      (row, index) =>
+        `${data.length === 1 ? 325 : (index * 650) / (data.length - 1)},${180 - (row.revenue / max) * 170}`,
+    )
+    .join(" ");
+  const labels = data.filter(
+    (_, index) =>
+      index % Math.max(1, Math.floor(data.length / 6)) === 0 ||
+      index === data.length - 1,
+  );
   return (
     <div className="chart">
       <div className="chart-labels">
-        <span>{period === 7 ? '$600' : period === 30 ? '$2k' : '$6k'}</span>
-        <span>{period === 7 ? '$400' : period === 30 ? '$1k' : '$4k'}</span>
-        <span>{period === 7 ? '$200' : period === 30 ? '$500' : '$2k'}</span>
+        <span>{money(max)}</span>
+        <span>{money(max * 0.66)}</span>
+        <span>{money(max * 0.33)}</span>
         <span>$0</span>
       </div>
       <div className="chart-main">
         <svg
           viewBox="0 0 650 190"
           preserveAspectRatio="none"
-          aria-label={`Illustrative revenue trend for the last ${period} days`}
+          aria-label="Revenue trend"
         >
           <defs>
             <linearGradient id="revenue-fill" x1="0" y1="0" x2="0" y2="1">
@@ -241,33 +251,25 @@ export function RevenueChart({ period = 7 }: { period?: number }) {
               strokeDasharray="3 4"
             />
           ))}
-          <path d={path + ' L650 190 L0 190Z'} fill="url(#revenue-fill)" />
-          <path d={path} fill="none" stroke="#f44280" strokeWidth="2.5" />
+          <polyline
+            points={`${points} 650,190 0,190`}
+            fill="url(#revenue-fill)"
+          />
+          <polyline
+            points={points}
+            fill="none"
+            stroke="#f44280"
+            strokeWidth="2.5"
+          />
         </svg>
         <div className="chart-dates">
-          {(period === 7
-            ? ['Aug 1', 'Aug 2', 'Aug 3', 'Aug 4', 'Aug 5', 'Aug 6', 'Aug 7']
-            : period === 30
-              ? [
-                  'Jul 9',
-                  'Jul 14',
-                  'Jul 19',
-                  'Jul 24',
-                  'Jul 29',
-                  'Aug 3',
-                  'Aug 7',
-                ]
-              : [
-                  'May 10',
-                  'May 25',
-                  'Jun 9',
-                  'Jun 24',
-                  'Jul 9',
-                  'Jul 24',
-                  'Aug 7',
-                ]
-          ).map((d) => (
-            <span key={d}>{d}</span>
+          {labels.map((row) => (
+            <span key={row.date}>
+              {new Date(`${row.date}T12:00:00`).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
           ))}
         </div>
       </div>
@@ -284,11 +286,11 @@ export function exportCsv(
     if (/^[=+@\-\t\r]/.test(s)) s = "'" + s;
     return '"' + s.replaceAll('"', '""') + '"';
   };
-  const csv = [headers, ...rows].map((r) => r.map(safe).join(',')).join('\r\n');
+  const csv = [headers, ...rows].map((r) => r.map(safe).join(",")).join("\r\n");
   const url = URL.createObjectURL(
-    new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' }),
+    new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" }),
   );
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   a.click();

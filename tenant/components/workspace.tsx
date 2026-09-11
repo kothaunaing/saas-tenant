@@ -1,7 +1,9 @@
-'use client';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { dispatchNotifications, getNotifications } from "@/tenant/lib/api";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   LayoutDashboard,
@@ -17,7 +19,7 @@ import {
   ArrowUpRight,
   Bell,
   ChevronDown,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -26,14 +28,14 @@ import {
   SidebarInset,
   SidebarTrigger,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from '@/components/ui/popover';
-import { useWorkspace } from './workspace-provider';
-import EditorSheet, { type Editor } from './editors';
+} from "@/components/ui/popover";
+import { useWorkspace } from "./workspace-provider";
+import EditorSheet, { type Editor } from "./editors";
 import {
   Overview,
   Customers,
@@ -45,36 +47,38 @@ import {
   LoyaltyPage,
   BillingPage,
   SettingsPage,
-} from './tenant-pages';
+  SupportPage,
+} from "./tenant-pages";
 const navigation = [
   {
-    label: 'Operations',
+    label: "Operations",
     items: [
-      ['Overview', LayoutDashboard],
-      ['Calendar', CalendarDays],
-      ['Appointments', CalendarCheck],
-      ['Customers', Users],
+      ["Overview", LayoutDashboard],
+      ["Calendar", CalendarDays],
+      ["Appointments", CalendarCheck],
+      ["Customers", Users],
     ],
   },
   {
-    label: 'Configuration',
+    label: "Configuration",
     items: [
-      ['Services', Scissors],
-      ['Staff', UserRoundCog],
-      ['Loyalty', Gift],
+      ["Services", Scissors],
+      ["Staff", UserRoundCog],
+      ["Loyalty", Gift],
     ],
   },
   {
-    label: 'Business',
+    label: "Business",
     items: [
-      ['Analytics', ChartNoAxesCombined],
-      ['Billing', CreditCard],
-      ['Settings', Settings],
+      ["Analytics", ChartNoAxesCombined],
+      ["Billing", CreditCard],
+      ["Settings", Settings],
+      ["Support", Bell],
     ],
   },
 ] as const;
 const pagePath = (name: string) =>
-  name === 'Overview' ? '/' : `/${name.toLowerCase()}`;
+  name === "Overview" ? "/" : `/${name.toLowerCase()}`;
 function Navigation({ page }: { page: string }) {
   const { setOpenMobile } = useSidebar();
   return (
@@ -85,10 +89,10 @@ function Navigation({ page }: { page: string }) {
           {group.items.map(([name, Icon]) => (
             <Link
               href={pagePath(name)}
-              aria-current={page === name ? 'page' : undefined}
+              aria-current={page === name ? "page" : undefined}
               key={name}
               onClick={() => setOpenMobile(false)}
-              className={`nav-link ${page === name ? 'active' : ''}`}
+              className={`nav-link ${page === name ? "active" : ""}`}
             >
               <Icon size={16} />
               {name}
@@ -100,16 +104,27 @@ function Navigation({ page }: { page: string }) {
   );
 }
 export default function Workspace({
-  initialPage = 'Overview',
+  initialPage = "Overview",
 }: {
   initialPage?: string;
 }) {
-  const { data, user, signOut } = useWorkspace();
+  const { data, user, signOut, slug } = useWorkspace();
+  const notifications = useQuery({
+    queryKey: ["tenant-notifications", slug],
+    queryFn: () => getNotifications(slug),
+    enabled: Boolean(slug),
+  });
+  const queryClient = useQueryClient();
   const router = useRouter();
   const [editor, setEditor] = useState<Editor | null>(null);
   const go = (page: string) => router.push(pagePath(page));
   const initials = (name: string) =>
-    name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
   useEffect(() => {
     type ModelContext = {
       registerTool: (
@@ -131,24 +146,24 @@ export default function Workspace({
       Promise.resolve(
         context.registerTool(
           {
-            name: 'start_appointment_creation',
+            name: "start_appointment_creation",
             description:
-              'Open the appointment form in this demo workspace. This does not create an appointment.',
+              "Open the appointment form. Saving the form creates an appointment through the API.",
             inputSchema: {
-              type: 'object',
+              type: "object",
               properties: {},
               additionalProperties: false,
             },
             annotations: { readOnlyHint: false },
             execute(input) {
               if (
-                typeof input !== 'object' ||
+                typeof input !== "object" ||
                 input === null ||
                 Object.keys(input).length
               )
-                throw new Error('Expected an empty object.');
-              setEditor({ type: 'appointment' });
-              return { form: 'appointment', status: 'opened' };
+                throw new Error("Expected an empty object.");
+              setEditor({ type: "appointment" });
+              return { form: "appointment", status: "opened" };
             },
           },
           { signal: controller.signal },
@@ -160,7 +175,7 @@ export default function Workspace({
   const props = { edit: setEditor, go };
   return (
     <SidebarProvider
-      style={{ '--sidebar-width': '220px' } as React.CSSProperties}
+      style={{ "--sidebar-width": "220px" } as React.CSSProperties}
     >
       <Sidebar>
         <Link href="/" className="brand">
@@ -178,25 +193,29 @@ export default function Workspace({
             <div className="inline">
               <Sparkles size={14} className="pink" />
               <strong className="text-xs">
-                {data.settings.plan ?? 'Free plan'}
+                {data.settings.plan ?? "Free plan"}
               </strong>
             </div>
             <p>More possibilities for your salon.</p>
-            <button className="btn full small" onClick={() => go('Billing')}>
+            <button className="btn full small" onClick={() => go("Billing")}>
               Explore plans
               <ArrowUpRight size={13} />
             </button>
           </div>
           <button
             className="person p-3 text-left"
-            onClick={() => go('Settings')}
+            onClick={() => go("Settings")}
           >
             <span className="avatar rose">
-              {user ? initials(user.name) : '?'}
+              {user ? initials(user.name) : "?"}
             </span>
             <div>
-              <strong>{user?.name ?? '—'}</strong>
-              <small>{user?.role === 'TENANT_ADMIN' ? 'Salon admin' : user?.role ?? ''}</small>
+              <strong>{user?.name ?? "—"}</strong>
+              <small>
+                {user?.role === "TENANT_ADMIN"
+                  ? "Salon admin"
+                  : (user?.role ?? "")}
+              </small>
             </div>
             <ChevronDown size={12} className="ml-auto muted" />
           </button>
@@ -227,30 +246,45 @@ export default function Workspace({
                 <Bell size={16} className="muted" />
               </PopoverTrigger>
               <PopoverContent align="end" className="w-80">
-                <h3>All caught up</h3>
-                <p className="subtitle">
-                  Booking updates and reminders will appear here when
-                  notifications are connected.
-                </p>
+                <h3>Notifications</h3>
+                {(notifications.data ?? []).slice(0, 6).map((item) => (
+                  <p className="subtitle" key={item.id}>
+                    {item.kind.replaceAll("_", " ")} · {item.channel} ·{" "}
+                    {item.status}
+                  </p>
+                ))}
+                {!notifications.isLoading && !notifications.data?.length && (
+                  <p className="subtitle">No notifications yet.</p>
+                )}
+                <button
+                  className="btn full small"
+                  onClick={async () => {
+                    await dispatchNotifications(slug);
+                    await queryClient.invalidateQueries({
+                      queryKey: ["tenant-notifications", slug],
+                    });
+                  }}
+                >
+                  Send due notifications
+                </button>
               </PopoverContent>
             </Popover>
-            <span className="avatar">
-              {user ? initials(user.name) : '?'}
-            </span>
-            <span>{user?.name ?? '—'}</span>
+            <span className="avatar">{user ? initials(user.name) : "?"}</span>
+            <span>{user?.name ?? "—"}</span>
           </div>
         </header>
         <main className="page">
-          {initialPage === 'Overview' && <Overview {...props} />}{' '}
-          {initialPage === 'Customers' && <Customers {...props} />}{' '}
-          {initialPage === 'Staff' && <StaffPage {...props} />}{' '}
-          {initialPage === 'Services' && <ServicesPage {...props} />}{' '}
-          {initialPage === 'Appointments' && <AppointmentsPage {...props} />}{' '}
-          {initialPage === 'Calendar' && <CalendarPage {...props} />}{' '}
-          {initialPage === 'Analytics' && <AnalyticsPage />}{' '}
-          {initialPage === 'Loyalty' && <LoyaltyPage {...props} />}{' '}
-          {initialPage === 'Billing' && <BillingPage />}{' '}
-          {initialPage === 'Settings' && <SettingsPage />}
+          {initialPage === "Overview" && <Overview {...props} />}{" "}
+          {initialPage === "Customers" && <Customers {...props} />}{" "}
+          {initialPage === "Staff" && <StaffPage {...props} />}{" "}
+          {initialPage === "Services" && <ServicesPage {...props} />}{" "}
+          {initialPage === "Appointments" && <AppointmentsPage {...props} />}{" "}
+          {initialPage === "Calendar" && <CalendarPage {...props} />}{" "}
+          {initialPage === "Analytics" && <AnalyticsPage />}{" "}
+          {initialPage === "Loyalty" && <LoyaltyPage {...props} />}{" "}
+          {initialPage === "Billing" && <BillingPage />}{" "}
+          {initialPage === "Settings" && <SettingsPage />}
+          {initialPage === "Support" && <SupportPage />}
         </main>
       </SidebarInset>
       {editor && (

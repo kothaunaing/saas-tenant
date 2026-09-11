@@ -1,4 +1,4 @@
-import { api, type PaginatedResult, type PaginationParams } from './client';
+import { api, type PaginatedResult, type PaginationParams } from "./client";
 
 export type WorkDay = {
   dayOfWeek: number;
@@ -39,23 +39,19 @@ export interface CreateStaffPayload {
 export type UpdateStaffPayload = Partial<CreateStaffPayload>;
 
 export const staffKey = (slug: string, params?: QueryStaffParams) =>
-  ['tenant', slug, 'staff', params] as const;
+  ["tenant", slug, "staff", params] as const;
 
 export async function getStaffList(
   slug: string,
   params?: QueryStaffParams,
 ): Promise<PaginatedResult<Staff>> {
-  const res = await api.get<PaginatedResult<Staff>>(
-    `/tenants/${slug}/staff`,
-    { params },
-  );
+  const res = await api.get<PaginatedResult<Staff>>(`/tenants/${slug}/staff`, {
+    params,
+  });
   return res.data;
 }
 
-export async function getStaffMember(
-  slug: string,
-  id: string,
-): Promise<Staff> {
+export async function getStaffMember(slug: string, id: string): Promise<Staff> {
   const res = await api.get<Staff>(`/tenants/${slug}/staff/${id}`);
   return res.data;
 }

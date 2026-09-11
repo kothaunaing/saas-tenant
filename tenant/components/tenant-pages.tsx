@@ -1,5 +1,14 @@
-'use client';
-import { useState } from 'react';
+"use client";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  changePlan,
+  createSupportTicket,
+  getBilling,
+  getSupportTickets,
+  getTenantAnalytics,
+  updatePaymentMethod,
+} from "@/tenant/lib/api";
 import {
   Plus,
   ArrowLeft,
@@ -22,11 +31,11 @@ import {
   Wallet,
   Pencil,
   CheckCircle2,
-} from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
-import { useWorkspace } from './workspace-provider';
+} from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { useWorkspace } from "./workspace-provider";
 import {
   Person,
   Badge,
@@ -44,35 +53,46 @@ import {
   TableRow,
   TableBody,
   TableCell,
-} from './tenant-ui';
-import {
-  money,
-  initials,
-  duration,
-} from '@/tenant/lib/demo-data';
-import type { Appointment, Customer } from '@/tenant/lib/api';
-import { minutes } from '@/tenant/lib/booking';
-import type { Editor } from './editors';
+} from "./tenant-ui";
+import { money, initials, duration } from "@/tenant/lib/domain";
+import type { Appointment, Customer } from "@/tenant/lib/api";
+import { minutes } from "@/tenant/lib/booking";
+import type { Editor } from "./editors";
+
+/** Returns the appropriate time-of-day greeting based on the current hour. */
+function timeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Good morning";
+  if (hour >= 12 && hour < 17) return "Good afternoon";
+  if (hour >= 17 && hour < 21) return "Good evening";
+  return "Good night";
+}
+
+/** Extracts the first name from a full name string. */
+function firstName(fullName: string | undefined | null): string {
+  if (!fullName) return "";
+  return fullName.trim().split(/\s+/)[0];
+}
 type Props = { edit: (editor: Editor) => void; go: (page: string) => void };
 const shortDate = (date: string) =>
-  new Date(date + 'T12:00:00').toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  new Date(date + "T12:00:00").toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 export function AppointmentTable({
   rows,
   edit,
 }: {
   rows: Appointment[];
-  edit: Props['edit'];
+  edit: Props["edit"];
 }) {
   const { data } = useWorkspace();
   return rows.length ? (
     <Table className="data-table">
       <TableHeader>
         <TableRow>
-          {['Customer', 'Service', 'Staff', 'When', 'Status', ''].map(
+          {["Customer", "Service", "Staff", "When", "Status", ""].map(
             (v, i) => (
               <TableHead key={i}>{v}</TableHead>
             ),
@@ -86,7 +106,7 @@ export function AppointmentTable({
           return (
             <TableRow key={a.id}>
               <TableCell>
-                <Person name={c?.name ?? 'Unknown customer'} email={c?.email} />
+                <Person name={c?.name ?? "Unknown customer"} email={c?.email} />
               </TableCell>
               <TableCell>
                 <strong className="font-medium text-[#484850]">
@@ -112,7 +132,7 @@ export function AppointmentTable({
                 <button
                   className="icon-btn border-0"
                   aria-label={`Edit appointment for ${c?.name}`}
-                  onClick={() => edit({ type: 'appointment', record: a })}
+                  onClick={() => edit({ type: "appointment", record: a })}
                 >
                   <ChevronRight size={15} />
                 </button>
@@ -130,24 +150,48 @@ export function AppointmentTable({
   );
 }
 export function Overview({ edit, go }: Props) {
-  const { data } = useWorkspace();
-  const today = data.appointments.filter((a) => a.date === new Date().toISOString().slice(0, 10));
-  const completed = today.filter((a) => a.status === 'Completed');
+  const { data, user } = useWorkspace();
+  const greeting = `${timeGreeting()}, ${firstName(user?.name)} ✧`;
+  const today = data.appointments.filter(
+    (a) => a.date === new Date().toISOString().slice(0, 10),
+  );
+  const completed = today.filter((a) => a.status === "Completed");
   const revenue = completed.reduce(
     (sum, a) =>
       sum + (data.services.find((s) => s.id === a.serviceId)?.price ?? 0),
     0,
   );
+  const revenueSeries = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - 6 + index);
+    const key = date.toISOString().slice(0, 10);
+    return {
+      date: key,
+      revenue: data.appointments
+        .filter(
+          (appointment) =>
+            appointment.date === key && appointment.status === "Completed",
+        )
+        .reduce(
+          (sum, appointment) =>
+            sum +
+            (data.services.find(
+              (service) => service.id === appointment.serviceId,
+            )?.price ?? 0),
+          0,
+        ),
+    };
+  });
   return (
     <>
       <PageHead
-        title="Good morning, May ✧"
+        title={greeting}
         eyebrow="Your salon, at a glance"
-        subtitle="A little care. A lovely day. Here’s what’s happening at Serenity."
+        subtitle={`Here's what's happening at ${data.settings.name}.`}
       >
         <button
           className="btn primary"
-          onClick={() => edit({ type: 'appointment' })}
+          onClick={() => edit({ type: "appointment" })}
         >
           <Plus size={15} />
           New appointment
@@ -189,17 +233,17 @@ export function Overview({ edit, go }: Props) {
               <h2>Revenue performance</h2>
               <p className="subtitle">A little more growth, every week.</p>
             </div>
-            <span className="badge">Last 7 days · sample</span>
+            <span className="badge">Last 7 days</span>
           </div>
-          <RevenueChart />
+          <RevenueChart data={revenueSeries} />
         </div>
         <div className="card card-pad">
           <div className="card-head">
-            <h2>Today at Serenity</h2>
+            <h2>Today at {data.settings.name}</h2>
             <Leaf size={17} className="pink" />
           </div>
           <p className="subtitle">Friday, August 7, 2026</p>
-          {['Confirmed', 'In progress', 'Completed'].map((name) => (
+          {["Confirmed", "In progress", "Completed"].map((name) => (
             <div className="list-row" key={name}>
               <span className="text-xs">{name}</span>
               <Badge
@@ -222,7 +266,7 @@ export function Overview({ edit, go }: Props) {
             <h2>Today’s appointments</h2>
             <p className="subtitle">Your next moments of care.</p>
           </div>
-          <button className="text-link" onClick={() => go('Appointments')}>
+          <button className="text-link" onClick={() => go("Appointments")}>
             View all
             <ArrowRight size={13} />
           </button>
@@ -235,7 +279,7 @@ export function Overview({ edit, go }: Props) {
         />
         <div className="table-footer">
           <span>{today.length} appointments today</span>
-          <span>All times in Asia/Yangon</span>
+          <span>All times in {data.settings.timezone}</span>
         </div>
       </div>
       <p className="bottom-note">Made for moments of care.</p>
@@ -244,9 +288,9 @@ export function Overview({ edit, go }: Props) {
 }
 export function Customers({ edit }: Props) {
   const { data } = useWorkspace();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  const [sort, setSort] = useState<keyof Customer>('name');
+  const [sort, setSort] = useState<keyof Customer>("name");
   const [ascending, setAscending] = useState(true);
   const customer = data.customers.find((c) => c.id === selected);
   const rows = data.customers
@@ -257,7 +301,7 @@ export function Customers({ edit }: Props) {
       const x = a[sort],
         y = b[sort];
       return (
-        (typeof x === 'number' && typeof y === 'number'
+        (typeof x === "number" && typeof y === "number"
           ? x - y
           : String(x).localeCompare(String(y))) * (ascending ? 1 : -1)
       );
@@ -287,16 +331,16 @@ export function Customers({ edit }: Props) {
               </span>
               <span className="inline">
                 <Phone size={13} />
-                {customer.phone || 'No phone added'}
+                {customer.phone || "No phone added"}
               </span>
             </p>
             <small className="muted block mt-2 text-[11px]">
-              {customer.visits ? 'Customer since June 2025' : 'New customer'}
+              {customer.visits ? "Customer since June 2025" : "New customer"}
             </small>
           </div>
           <button
             className="btn"
-            onClick={() => edit({ type: 'customer', record: customer })}
+            onClick={() => edit({ type: "customer", record: customer })}
           >
             <Pencil size={13} />
             Edit
@@ -327,14 +371,14 @@ export function Customers({ edit }: Props) {
             </div>
             <button
               className="text-link"
-              onClick={() => edit({ type: 'customer', record: customer })}
+              onClick={() => edit({ type: "customer", record: customer })}
             >
               Edit notes
             </button>
           </div>
           <p>
             {customer.notes ||
-              'No notes yet. Add a preference or something helpful for your team.'}
+              "No notes yet. Add a preference or something helpful for your team."}
           </p>
         </div>
         <div className="two-col">
@@ -343,73 +387,32 @@ export function Customers({ edit }: Props) {
               <h2>Booking history</h2>
               <span className="badge">{customer.visits} past visits</span>
             </div>
-            {customer.id === 'c1' ? (
-              <Table className="data-table">
-                <TableHeader>
-                  <TableRow>
-                    {['Service', 'With', 'When', 'Price', 'Status'].map((v) => (
-                      <TableHead key={v}>{v}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[
-                    ['Hydrating Facial', 'Hnin Wai', 'Jul 29, 2026', '55'],
-                    ['Anti-Ageing Facial', 'Hnin Wai', 'Jun 27, 2026', '85'],
-                    ['Body Scrub & Wrap', 'Hnin Wai', 'May 21, 2026', '70'],
-                    ['Hydrating Facial', 'Hnin Wai', 'Apr 9, 2026', '55'],
-                    [
-                      'Signature Cut & Style',
-                      'Nandar Aye',
-                      'Feb 28, 2026',
-                      '45',
-                    ],
-                  ].map(([name, staff, date, price], i) => (
-                    <TableRow key={i}>
-                      <TableCell>
-                        <span className="text-[#33333b] font-medium">
-                          {name}
-                        </span>
-                        <div className="muted text-[10px] mt-1">1 hr</div>
-                      </TableCell>
-                      <TableCell>{staff}</TableCell>
-                      <TableCell>{date}</TableCell>
-                      <TableCell>{money(Number(price))}</TableCell>
-                      <TableCell>
-                        <Badge status="Completed" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <AppointmentTable
-                rows={data.appointments.filter(
-                  (a) => a.customerId === customer.id,
-                )}
-                edit={edit}
-              />
-            )}
+            <AppointmentTable
+              rows={data.appointments.filter(
+                (appointment) => appointment.customerId === customer.id,
+              )}
+              edit={edit}
+            />
           </div>
           <div className="card card-pad">
             <div className="card-head">
               <h2>Reviews</h2>
-              {customer.id === 'c1' && (
+              {customer.id === "c1" && (
                 <span className="inline">
                   <span className="stars">★★★★★</span>
                   <small className="muted">5.0</small>
                 </span>
               )}
             </div>
-            {customer.id === 'c1' ? (
+            {customer.id === "c1" ? (
               <>
                 {[
                   [
-                    'Hydrating Facial',
-                    'Jul 30, 2026',
-                    'Hnin Wai is wonderful — my skin has never looked better.',
+                    "Hydrating Facial",
+                    "Jul 30, 2026",
+                    "Hnin Wai is wonderful — my skin has never looked better.",
                   ],
-                  ['Anti-Ageing Facial', 'Jun 28, 2026', ''],
+                  ["Anti-Ageing Facial", "Jun 28, 2026", ""],
                 ].map(([name, date, text]) => (
                   <div className="review" key={name}>
                     <div className="flex justify-between">
@@ -440,7 +443,7 @@ export function Customers({ edit }: Props) {
       >
         <button
           className="btn primary"
-          onClick={() => edit({ type: 'customer' })}
+          onClick={() => edit({ type: "customer" })}
         >
           <Plus size={15} />
           Add customer
@@ -463,12 +466,12 @@ export function Customers({ edit }: Props) {
               <TableRow>
                 {(
                   [
-                    ['Customer', 'name'],
-                    ['Visits', 'visits'],
-                    ['No-show', 'noShow'],
-                    ['Points', 'points'],
-                    ['Lifetime', 'spent'],
-                    ['Last visit', 'last'],
+                    ["Customer", "name"],
+                    ["Visits", "visits"],
+                    ["No-show", "noShow"],
+                    ["Points", "points"],
+                    ["Lifetime", "spent"],
+                    ["Last visit", "last"],
                   ] as const
                 ).map(([label, key]) => (
                   <TableHead
@@ -476,9 +479,9 @@ export function Customers({ edit }: Props) {
                     aria-sort={
                       sort === key
                         ? ascending
-                          ? 'ascending'
-                          : 'descending'
-                        : 'none'
+                          ? "ascending"
+                          : "descending"
+                        : "none"
                     }
                   >
                     <button className="sort-button" onClick={() => order(key)}>
@@ -503,7 +506,7 @@ export function Customers({ edit }: Props) {
                   </TableCell>
                   <TableCell>{c.visits}</TableCell>
                   <TableCell>
-                    <span className={`badge ${c.noShow ? 'orange' : ''}`}>
+                    <span className={`badge ${c.noShow ? "orange" : ""}`}>
                       {c.noShow}%
                     </span>
                   </TableCell>
@@ -539,14 +542,14 @@ export function Customers({ edit }: Props) {
             className="text-link"
             onClick={() =>
               exportCsv(
-                'serenity-customers.csv',
+                "serenity-customers.csv",
                 [
-                  'Name',
-                  'Email',
-                  'Phone',
-                  'Visits',
-                  'Points',
-                  'Lifetime spend',
+                  "Name",
+                  "Email",
+                  "Phone",
+                  "Visits",
+                  "Points",
+                  "Lifetime spend",
                 ],
                 rows.map((c) => [
                   c.name,
@@ -569,12 +572,12 @@ export function Customers({ edit }: Props) {
 }
 export function StaffPage({ edit }: Props) {
   const { data } = useWorkspace();
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('All members');
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All members");
   const rows = data.staff.filter(
     (s) =>
       (s.name + s.email).toLowerCase().includes(search.toLowerCase()) &&
-      (filter === 'All members' || s.active === (filter === 'Active')),
+      (filter === "All members" || s.active === (filter === "Active")),
   );
   return (
     <>
@@ -582,7 +585,7 @@ export function StaffPage({ edit }: Props) {
         title="Staff"
         subtitle="Manage your team, what they can do, and when they work."
       >
-        <button className="btn primary" onClick={() => edit({ type: 'staff' })}>
+        <button className="btn primary" onClick={() => edit({ type: "staff" })}>
           <Plus size={15} />
           Add member
         </button>
@@ -594,7 +597,7 @@ export function StaffPage({ edit }: Props) {
           <Choice
             value={filter}
             onChange={setFilter}
-            options={['All members', 'Active', 'Inactive']}
+            options={["All members", "Active", "Inactive"]}
             label="Staff status"
           />
         </div>
@@ -605,12 +608,12 @@ export function StaffPage({ edit }: Props) {
             <TableHeader>
               <TableRow>
                 {[
-                  'Name',
-                  'Role',
-                  'Services',
-                  'Working hours',
-                  'Status',
-                  '',
+                  "Name",
+                  "Role",
+                  "Services",
+                  "Working hours",
+                  "Status",
+                  "",
                 ].map((v, i) => (
                   <TableHead key={i}>{v}</TableHead>
                 ))}
@@ -622,7 +625,7 @@ export function StaffPage({ edit }: Props) {
                   <TableCell>
                     <button
                       className="text-left"
-                      onClick={() => edit({ type: 'staff', record: s })}
+                      onClick={() => edit({ type: "staff", record: s })}
                     >
                       <Person name={s.name} email={s.email} />
                     </button>
@@ -635,13 +638,13 @@ export function StaffPage({ edit }: Props) {
                     {s.hours.filter((h) => h.enabled).length} days per week
                   </TableCell>
                   <TableCell>
-                    <Badge status={s.active ? 'Active' : 'Inactive'} />
+                    <Badge status={s.active ? "Active" : "Inactive"} />
                   </TableCell>
                   <TableCell>
                     <button
                       className="icon-btn border-0"
                       aria-label={`Edit ${s.name}`}
-                      onClick={() => edit({ type: 'staff', record: s })}
+                      onClick={() => edit({ type: "staff", record: s })}
                     >
                       <ChevronRight size={15} />
                     </button>
@@ -675,12 +678,12 @@ export function StaffPage({ edit }: Props) {
 }
 export function ServicesPage({ edit }: Props) {
   const { data } = useWorkspace();
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All services');
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All services");
   const rows = data.services.filter(
     (s) =>
       s.name.toLowerCase().includes(search.toLowerCase()) &&
-      (category === 'All services' || s.category === category),
+      (category === "All services" || s.category === category),
   );
   return (
     <>
@@ -690,7 +693,7 @@ export function ServicesPage({ edit }: Props) {
       >
         <button
           className="btn primary"
-          onClick={() => edit({ type: 'service' })}
+          onClick={() => edit({ type: "service" })}
         >
           <Plus size={15} />
           Add service
@@ -707,12 +710,12 @@ export function ServicesPage({ edit }: Props) {
           value={category}
           onChange={setCategory}
           options={[
-            'All services',
-            'Facial',
-            'Hair',
-            'Body',
-            'Massage',
-            'Nails',
+            "All services",
+            "Facial",
+            "Hair",
+            "Body",
+            "Massage",
+            "Nails",
           ]}
         />
       </div>
@@ -721,14 +724,14 @@ export function ServicesPage({ edit }: Props) {
           <div className="card service-card" key={s.id}>
             <div className="flex justify-between items-center">
               <span className="service-icon">
-                {s.category === 'Hair' ? (
+                {s.category === "Hair" ? (
                   <Scissors size={19} />
                 ) : (
                   <Leaf size={19} />
                 )}
               </span>
-              <span className={`badge ${s.active ? '' : 'red'}`}>
-                {s.active ? s.category : 'Inactive'}
+              <span className={`badge ${s.active ? "" : "red"}`}>
+                {s.active ? s.category : "Inactive"}
               </span>
             </div>
             <h2>{s.name}</h2>
@@ -741,14 +744,14 @@ export function ServicesPage({ edit }: Props) {
               {
                 data.staff.filter((t) => t.services.includes(s.id) && t.active)
                   .length
-              }{' '}
+              }{" "}
               staff
             </div>
             <div className="service-bottom">
               <strong>{money(s.price)}</strong>
               <button
                 className="btn small"
-                onClick={() => edit({ type: 'service', record: s })}
+                onClick={() => edit({ type: "service", record: s })}
               >
                 Edit service
                 <ChevronRight size={12} />
@@ -763,18 +766,18 @@ export function ServicesPage({ edit }: Props) {
 }
 export function AppointmentsPage({ edit }: Props) {
   const { data } = useWorkspace();
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('All statuses');
-  const [date, setDate] = useState('');
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All statuses");
+  const [date, setDate] = useState("");
   const rows = data.appointments
     .filter((a) => {
       const c = data.customers.find((c) => c.id === a.customerId);
       const s = data.services.find((s) => s.id === a.serviceId);
       return (
-        ((c?.name ?? '') + (s?.name ?? ''))
+        ((c?.name ?? "") + (s?.name ?? ""))
           .toLowerCase()
           .includes(search.toLowerCase()) &&
-        (status === 'All statuses' || a.status === status) &&
+        (status === "All statuses" || a.status === status) &&
         (!date || a.date === date)
       );
     })
@@ -787,7 +790,7 @@ export function AppointmentsPage({ edit }: Props) {
       >
         <button
           className="btn primary"
-          onClick={() => edit({ type: 'appointment' })}
+          onClick={() => edit({ type: "appointment" })}
         >
           <Plus size={15} />
           New appointment
@@ -808,7 +811,7 @@ export function AppointmentsPage({ edit }: Props) {
             onChange={(e) => setDate(e.target.value)}
           />
           {date && (
-            <button className="text-link" onClick={() => setDate('')}>
+            <button className="text-link" onClick={() => setDate("")}>
               Clear
             </button>
           )}
@@ -816,13 +819,13 @@ export function AppointmentsPage({ edit }: Props) {
             value={status}
             onChange={setStatus}
             options={[
-              'All statuses',
-              'Pending',
-              'Confirmed',
-              'In progress',
-              'Completed',
-              'Cancelled',
-              'No-show',
+              "All statuses",
+              "Pending",
+              "Confirmed",
+              "In progress",
+              "Completed",
+              "Cancelled",
+              "No-show",
             ]}
             label="Filter status"
           />
@@ -836,12 +839,12 @@ export function AppointmentsPage({ edit }: Props) {
             className="text-link"
             onClick={() =>
               exportCsv(
-                'serenity-appointments.csv',
-                ['Customer', 'Service', 'Staff', 'Date', 'Time', 'Status'],
+                "serenity-appointments.csv",
+                ["Customer", "Service", "Staff", "Date", "Time", "Status"],
                 rows.map((a) => [
-                  data.customers.find((c) => c.id === a.customerId)?.name ?? '',
-                  data.services.find((s) => s.id === a.serviceId)?.name ?? '',
-                  data.staff.find((s) => s.id === a.staffId)?.name ?? '',
+                  data.customers.find((c) => c.id === a.customerId)?.name ?? "",
+                  data.services.find((s) => s.id === a.serviceId)?.name ?? "",
+                  data.staff.find((s) => s.id === a.staffId)?.name ?? "",
                   a.date,
                   a.time,
                   a.status,
@@ -860,15 +863,15 @@ export function AppointmentsPage({ edit }: Props) {
 export function CalendarPage({ edit }: Props) {
   const { data } = useWorkspace();
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [member, setMember] = useState('all');
+  const [member, setMember] = useState("all");
   const team = data.staff.filter(
-    (s) => s.active && (member === 'all' || s.id === member),
+    (s) => s.active && (member === "all" || s.id === member),
   );
   const shift = (days: number) => {
-    const d = new Date(date + 'T12:00:00');
+    const d = new Date(date + "T12:00:00");
     d.setDate(d.getDate() + days);
     setDate(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
     );
   };
   return (
@@ -879,7 +882,7 @@ export function CalendarPage({ edit }: Props) {
       >
         <button
           className="btn primary"
-          onClick={() => edit({ type: 'appointment' })}
+          onClick={() => edit({ type: "appointment" })}
         >
           <Plus size={15} />
           New appointment
@@ -887,8 +890,11 @@ export function CalendarPage({ edit }: Props) {
       </PageHead>
       <div className="toolbar">
         <div className="inline">
-          <button className="btn" onClick={() => setDate(new Date().toISOString().slice(0, 10))}>
-            Demo today
+          <button
+            className="btn"
+            onClick={() => setDate(new Date().toISOString().slice(0, 10))}
+          >
+            Today
           </button>
           <button
             className="icon-btn"
@@ -918,7 +924,7 @@ export function CalendarPage({ edit }: Props) {
           value={member}
           onChange={setMember}
           options={[
-            { value: 'all', label: 'All team members' },
+            { value: "all", label: "All team members" },
             ...data.staff
               .filter((s) => s.active)
               .map((s) => ({ value: s.id, label: s.name })),
@@ -950,7 +956,7 @@ export function CalendarPage({ edit }: Props) {
           </div>
           {team.map((s, i) => (
             <div className="cal-column" key={s.id}>
-              {!s.hours[new Date(date + 'T12:00:00').getDay()].enabled && (
+              {!s.hours[new Date(date + "T12:00:00").getDay()].enabled && (
                 <div className="absolute inset-0 bg-gray-50/80 flex justify-center pt-6 muted">
                   Day off
                 </div>
@@ -960,7 +966,7 @@ export function CalendarPage({ edit }: Props) {
                   (a) =>
                     a.staffId === s.id &&
                     a.date === date &&
-                    a.status !== 'Cancelled',
+                    a.status !== "Cancelled",
                 )
                 .map((a) => {
                   const service = data.services.find(
@@ -971,13 +977,13 @@ export function CalendarPage({ edit }: Props) {
                   );
                   return (
                     <button
-                      className={`cal-event ${['', 'blue', 'green'][i % 3]}`}
+                      className={`cal-event ${["", "blue", "green"][i % 3]}`}
                       key={a.id}
                       style={{
                         top: ((minutes(a.time) - 540) / 60) * 100,
                         height: ((service?.duration ?? 60) / 60) * 100 - 5,
                       }}
-                      onClick={() => edit({ type: 'appointment', record: a })}
+                      onClick={() => edit({ type: "appointment", record: a })}
                     >
                       <span>
                         {a.time} · {duration(service?.duration ?? 60)}
@@ -1002,52 +1008,22 @@ export function CalendarPage({ edit }: Props) {
   );
 }
 export function AnalyticsPage() {
-  const [period, setPeriod] = useState('30');
-  const summaries: Record<
-    string,
-    {
-      revenue: number;
-      appointments: number;
-      ticket: number;
-      utilization: number;
-      completed: number;
-      cancelled: number;
-      noShow: number;
-      trend: string;
-    }
-  > = {
-    '7': {
-      revenue: 2415,
-      appointments: 42,
-      ticket: 63.55,
-      utilization: 76,
-      completed: 38,
-      cancelled: 3,
-      noShow: 1,
-      trend: '8%',
-    },
-    '30': {
-      revenue: 10040,
-      appointments: 184,
-      ticket: 61.6,
-      utilization: 73,
-      completed: 163,
-      cancelled: 14,
-      noShow: 7,
-      trend: '13%',
-    },
-    '90': {
-      revenue: 28450,
-      appointments: 526,
-      ticket: 61.31,
-      utilization: 71,
-      completed: 464,
-      cancelled: 42,
-      noShow: 20,
-      trend: '17%',
-    },
-  };
-  const summary = summaries[period];
+  const { slug } = useWorkspace();
+  const [period, setPeriod] = useState("30");
+  const query = useQuery({
+    queryKey: ["tenant-analytics", slug, period],
+    queryFn: () => getTenantAnalytics(slug, Number(period)),
+    enabled: Boolean(slug),
+  });
+  const summary = query.data;
+  if (query.isLoading) return <p>Loading analytics…</p>;
+  if (query.isError || !summary)
+    return (
+      <Empty
+        title="Analytics unavailable"
+        description="The analytics API could not be reached."
+      />
+    );
   return (
     <>
       <PageHead
@@ -1057,7 +1033,7 @@ export function AnalyticsPage() {
       >
         <Tabs value={period} onValueChange={(v) => setPeriod(String(v))}>
           <TabsList className="bg-white border p-1 h-9!">
-            {['7', '30', '90'].map((v) => (
+            {["7", "30", "90"].map((v) => (
               <TabsTrigger className="text-xs px-3" value={v} key={v}>
                 {v} days
               </TabsTrigger>
@@ -1069,28 +1045,24 @@ export function AnalyticsPage() {
         <Stat
           label="Net revenue"
           value={money(summary.revenue)}
-          change={summary.trend}
-          foot="vs. previous period"
+          foot={`Last ${period} days`}
           icon={DollarSign}
         />
         <Stat
           label="Appointments"
-          value={summary.appointments}
-          change="9%"
-          foot={`${summary.completed} completed`}
+          value={summary.totalBookings}
+          foot={`${summary.completedBookings} completed`}
           icon={CalendarCheck}
         />
         <Stat
           label="Average ticket"
-          value={money(summary.ticket)}
-          change="3%"
+          value={money(summary.averageTicket)}
           foot="per completed visit"
           icon={Wallet}
         />
         <Stat
           label="Staff utilization"
-          value={`${summary.utilization}%`}
-          change="4%"
+          value={`${summary.staffUtilization}%`}
           foot="of bookable hours"
           icon={Clock3}
         />
@@ -1106,31 +1078,40 @@ export function AnalyticsPage() {
             </div>
             <span className="badge">Last {period} days</span>
           </div>
-          <RevenueChart period={Number(period)} />
+          <RevenueChart data={summary.dailyRevenue} />
         </div>
         <div className="card card-pad">
           <h2>Appointment health</h2>
           <p className="subtitle">How booked visits resolved this period</p>
           {[
-            ['Completed', summary.completed, '#399775'],
-            ['Cancelled', summary.cancelled, '#c59636'],
-            ['No-show', summary.noShow, '#df737d'],
+            ["Completed", summary.completedBookings, "#399775"],
+            ["Cancelled", summary.cancelledBookings, "#c59636"],
+            ["No-show", summary.noShowBookings, "#df737d"],
           ].map(([label, count, color]) => (
             <div className="health-item" key={String(label)}>
               <div className="health-label">
                 <strong>{label}</strong>
                 <span>
-                  {count}{' '}
+                  {count}{" "}
                   <span className="muted">
-                    · {Math.round((Number(count) / summary.appointments) * 100)}
+                    ·{" "}
+                    {summary.totalBookings
+                      ? Math.round(
+                          (Number(count) / summary.totalBookings) * 100,
+                        )
+                      : 0}
                     %
                   </span>
                 </span>
               </div>
               <Progress
                 aria-label={String(label)}
-                value={(Number(count) / summary.appointments) * 100}
-                style={{ '--primary': color } as React.CSSProperties}
+                value={
+                  summary.totalBookings
+                    ? (Number(count) / summary.totalBookings) * 100
+                    : 0
+                }
+                style={{ "--primary": color } as React.CSSProperties}
               />
             </div>
           ))}
@@ -1154,23 +1135,22 @@ export function AnalyticsPage() {
             </div>
             <Scissors size={17} className="muted" />
           </div>
-          {[
-            ['Hydrating Facial', 34],
-            ['Signature Cut & Style', 28],
-            ['Aromatherapy Massage', 22],
-            ['Gel Manicure', 16],
-          ].map(([name, percent], i) => (
-            <div className="list-row" key={name}>
+          {summary.popularServices.slice(0, 5).map((service, i) => (
+            <div className="list-row" key={service.serviceId}>
               <span className="avatar text-[11px]">0{i + 1}</span>
               <div className="flex-1">
-                <h3 className="text-xs!">{name}</h3>
+                <h3 className="text-xs!">{service.name}</h3>
                 <Progress
                   className="mt-3"
-                  aria-label={`${name} share of visits`}
-                  value={Number(percent) * 2}
+                  aria-label={`${service.name} share of visits`}
+                  value={
+                    summary.totalBookings
+                      ? (service.bookings / summary.totalBookings) * 100
+                      : 0
+                  }
                 />
               </div>
-              <span className="muted text-xs">{percent}%</span>
+              <span className="muted text-xs">{service.bookings} bookings</span>
             </div>
           ))}
         </div>
@@ -1179,25 +1159,17 @@ export function AnalyticsPage() {
             <h2>Team utilization</h2>
             <Users size={17} className="muted" />
           </div>
-          {[
-            ['Hnin Wai', 86],
-            ['Nandar Aye', 78],
-            ['May Zin', 71],
-            ['Su Latt', 64],
-          ].map(([name, value]) => (
-            <div className="list-row" key={name}>
-              <Person name={String(name)} />
-              <span className="badge green">
-                {Number(value) + (Number(period) === 7 ? 2 : 0)}%
-              </span>
+          {summary.staff.map((member) => (
+            <div className="list-row" key={member.staffId}>
+              <Person name={member.name} />
+              <span className="badge green">{member.utilization}%</span>
             </div>
           ))}
         </div>
       </div>
       <div className="toolbar">
         <span className="export-note">
-          Illustrative demo report · separate from appointments edited in this
-          session.
+          Calculated from completed appointments and staff schedules.
         </span>
         <button
           className="btn"
@@ -1205,19 +1177,19 @@ export function AnalyticsPage() {
             exportCsv(
               `serenity-analytics-${period}-days.csv`,
               [
-                'Period',
-                'Net revenue',
-                'Appointments',
-                'Average ticket',
-                'Utilization',
+                "Period",
+                "Net revenue",
+                "Appointments",
+                "Average ticket",
+                "Utilization",
               ],
               [
                 [
                   `${period} days`,
                   summary.revenue,
-                  summary.appointments,
-                  summary.ticket,
-                  `${summary.utilization}%`,
+                  summary.totalBookings,
+                  summary.averageTicket,
+                  `${summary.staffUtilization}%`,
                 ],
               ],
             )
@@ -1242,7 +1214,7 @@ export function LoyaltyPage({ edit }: Props) {
       >
         <button
           className="btn primary"
-          onClick={() => edit({ type: 'reward' })}
+          onClick={() => edit({ type: "reward" })}
         >
           <Plus size={15} />
           Create reward
@@ -1322,7 +1294,7 @@ export function LoyaltyPage({ edit }: Props) {
               <span className="service-icon">
                 <Gift size={19} />
               </span>
-              <span className={`badge ${r.active ? 'rose' : ''}`}>
+              <span className={`badge ${r.active ? "rose" : ""}`}>
                 {r.points.toLocaleString()} points
               </span>
             </div>
@@ -1331,7 +1303,7 @@ export function LoyaltyPage({ edit }: Props) {
             <div className="flex items-end justify-between">
               <button
                 className="btn small"
-                onClick={() => edit({ type: 'reward', record: r })}
+                onClick={() => edit({ type: "reward", record: r })}
               >
                 Edit reward
                 <ChevronRight size={12} />
@@ -1350,10 +1322,10 @@ export function LoyaltyPage({ edit }: Props) {
           <TableHeader>
             <TableRow>
               {[
-                'Customer',
-                'Visits',
-                'Points balance',
-                'Available rewards',
+                "Customer",
+                "Visits",
+                "Points balance",
+                "Available rewards",
               ].map((h) => (
                 <TableHead key={h}>{h}</TableHead>
               ))}
@@ -1380,7 +1352,7 @@ export function LoyaltyPage({ edit }: Props) {
                       data.rewards.filter(
                         (r) => r.active && r.points <= c.points,
                       ).length
-                    }{' '}
+                    }{" "}
                     available
                   </TableCell>
                 </TableRow>
@@ -1392,8 +1364,49 @@ export function LoyaltyPage({ edit }: Props) {
   );
 }
 export function BillingPage() {
-  const { data, save, notify } = useWorkspace();
+  const { data, notify, slug } = useWorkspace();
+  const client = useQueryClient();
+  const billing = useQuery({
+    queryKey: ["tenant-billing", slug],
+    queryFn: () => getBilling(slug),
+    enabled: Boolean(slug),
+  });
+  const planMutation = useMutation({
+    mutationFn: (planId: string) => changePlan(slug, planId),
+    onSuccess: (value) => {
+      client.setQueryData(["tenant-billing", slug], value);
+      notify("Subscription plan updated.");
+    },
+  });
+  const paymentMutation = useMutation({
+    mutationFn: (value: {
+      brand: string;
+      last4: string;
+      expMonth: number;
+      expYear: number;
+    }) => updatePaymentMethod(slug, value),
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: ["tenant-billing", slug] });
+      notify("Payment method updated.");
+    },
+  });
   const [current, setCurrent] = useState<string | null>(null);
+  const [editingPayment, setEditingPayment] = useState(false);
+  const [payment, setPayment] = useState({
+    brand: "Visa",
+    last4: "",
+    expMonth: 1,
+    expYear: new Date().getFullYear(),
+  });
+  const overview = billing.data;
+  if (billing.isLoading) return <p>Loading billing details…</p>;
+  if (billing.isError || !overview)
+    return (
+      <Empty
+        title="Billing unavailable"
+        description="The billing API could not be reached."
+      />
+    );
   return (
     <>
       <PageHead
@@ -1402,60 +1415,24 @@ export function BillingPage() {
       />
       <div className="subtle-banner">
         <div>
-          <strong>You’re on the {data.settings.plan} plan.</strong>
-          <span className="ml-2">
-            Your next billing date is September 1, 2026.
-          </span>
+          <strong>
+            You’re on the {overview.plan?.name ?? "unassigned"} plan.
+          </strong>
         </div>
-        <span className="badge green">Active · demo</span>
+        <span className="badge green">Active</span>
       </div>
       <div className="plan-grid">
-        {[
-          {
-            name: 'Starter',
-            price: 19,
-            description: 'For a small, growing salon.',
-            features: [
-              'Up to 3 team members',
-              'Appointment scheduling',
-              'Customer management',
-              'Basic reports',
-            ],
-          },
-          {
-            name: 'Pro',
-            price: 49,
-            description: 'More care. More possibilities.',
-            features: [
-              'Up to 10 team members',
-              'Everything in Starter',
-              'Loyalty & rewards',
-              'Advanced analytics',
-            ],
-          },
-          {
-            name: 'Business',
-            price: 99,
-            description: 'For your next chapter.',
-            features: [
-              'Unlimited team members',
-              'Everything in Pro',
-              'Priority support',
-              'Multiple locations',
-            ],
-          },
-        ].map((plan) => (
+        {overview.availablePlans.map((plan) => (
           <div
-            className={`card plan ${data.settings.plan === plan.name ? 'selected' : ''}`}
+            className={`card plan ${overview.plan?.id === plan.id ? "selected" : ""}`}
             key={plan.name}
           >
             <div className="flex justify-between items-center">
               <h2>{plan.name}</h2>
-              {data.settings.plan === plan.name && (
+              {overview.plan?.id === plan.id && (
                 <span className="badge rose">Current plan</span>
               )}
             </div>
-            <p className="subtitle">{plan.description}</p>
             <div className="plan-price">
               ${plan.price}
               <small> / month</small>
@@ -1469,12 +1446,12 @@ export function BillingPage() {
               ))}
             </ul>
             <button
-              disabled={data.settings.plan === plan.name}
-              className={`btn full ${plan.name === 'Pro' ? 'primary' : ''}`}
-              onClick={() => setCurrent(plan.name)}
+              disabled={overview.plan?.id === plan.id}
+              className="btn full primary"
+              onClick={() => setCurrent(plan.id)}
             >
-              {data.settings.plan === plan.name
-                ? 'Your current plan'
+              {overview.plan?.id === plan.id
+                ? "Your current plan"
                 : `Choose ${plan.name}`}
             </button>
           </div>
@@ -1482,22 +1459,20 @@ export function BillingPage() {
       </div>
       {current && (
         <div className="card card-pad mb-6">
-          <h2>Switch to {current}?</h2>
+          <h2>Confirm subscription change?</h2>
           <p className="subtitle">
-            This changes the demo plan only. No payment will be taken.
+            A due invoice will be created for the selected plan.
           </p>
           <div className="inline mt-4">
             <button
               className="btn primary"
+              disabled={planMutation.isPending}
               onClick={() => {
-                void save(
-                  { ...data, settings: { ...data.settings, plan: current } },
-                  `Demo plan changed to ${current}. No charge was made.`,
-                );
+                planMutation.mutate(current);
                 setCurrent(null);
               }}
             >
-              Confirm demo plan
+              Confirm plan
             </button>
             <button className="btn" onClick={() => setCurrent(null)}>
               Cancel
@@ -1511,17 +1486,98 @@ export function BillingPage() {
             <h2>Payment method</h2>
             <Wallet size={17} className="muted" />
           </div>
-          <div className="person">
-            <span className="badge blue">VISA</span>
-            <div>
-              <strong>Visa ending in 4242</strong>
-              <small>Expires 08/2028 · Sample payment method</small>
+          {overview.paymentMethods[0] ? (
+            <div className="person">
+              <span className="badge blue">
+                {overview.paymentMethods[0].brand}
+              </span>
+              <div>
+                <strong>
+                  {overview.paymentMethods[0].brand} ending in{" "}
+                  {overview.paymentMethods[0].last4}
+                </strong>
+                <small>
+                  Expires{" "}
+                  {String(overview.paymentMethods[0].expMonth).padStart(2, "0")}
+                  /{overview.paymentMethods[0].expYear}
+                </small>
+              </div>
             </div>
-          </div>
-          <p className="subtitle mt-5!">
-            Secure payment-method updates will be available when billing is
-            connected.
-          </p>
+          ) : (
+            <p className="subtitle">No payment method saved.</p>
+          )}
+          <button
+            className="btn mt-4"
+            onClick={() => setEditingPayment(!editingPayment)}
+          >
+            Update payment method
+          </button>
+          {editingPayment && (
+            <form
+              className="mt-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                paymentMutation.mutate(payment);
+                setEditingPayment(false);
+              }}
+            >
+              <Field label="Card brand">
+                <input
+                  value={payment.brand}
+                  onChange={(e) =>
+                    setPayment({ ...payment, brand: e.target.value })
+                  }
+                  required
+                />
+              </Field>
+              <Field label="Last four digits">
+                <input
+                  value={payment.last4}
+                  maxLength={4}
+                  pattern="[0-9]{4}"
+                  onChange={(e) =>
+                    setPayment({ ...payment, last4: e.target.value })
+                  }
+                  required
+                />
+              </Field>
+              <div className="inline">
+                <Field label="Expiry month">
+                  <input
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={payment.expMonth}
+                    onChange={(e) =>
+                      setPayment({
+                        ...payment,
+                        expMonth: Number(e.target.value),
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Expiry year">
+                  <input
+                    type="number"
+                    min={new Date().getFullYear()}
+                    value={payment.expYear}
+                    onChange={(e) =>
+                      setPayment({
+                        ...payment,
+                        expYear: Number(e.target.value),
+                      })
+                    }
+                  />
+                </Field>
+              </div>
+              <button
+                className="btn primary"
+                disabled={paymentMutation.isPending}
+              >
+                Save payment method
+              </button>
+            </form>
+          )}
         </div>
         <div className="card card-pad">
           <h2>Billing contact</h2>
@@ -1536,12 +1592,12 @@ export function BillingPage() {
       <div className="card">
         <div className="card-head px-5 pt-5">
           <h2>Invoice history</h2>
-          <span className="badge">Sample invoices</span>
+          <span className="badge">{overview.invoices.length} invoices</span>
         </div>
         <Table className="data-table">
           <TableHeader>
             <TableRow>
-              {['Invoice', 'Date', 'Plan', 'Amount', 'Status', ''].map(
+              {["Invoice", "Date", "Plan", "Amount", "Status", ""].map(
                 (h, i) => (
                   <TableHead key={i}>{h}</TableHead>
                 ),
@@ -1549,33 +1605,37 @@ export function BillingPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {['August', 'July', 'June'].map((month, i) => (
-              <TableRow key={month}>
-                <TableCell>INV-2026-{String(8 - i).padStart(3, '0')}</TableCell>
-                <TableCell>{month} 1, 2026</TableCell>
-                <TableCell>Pro · Monthly</TableCell>
-                <TableCell>$49.00</TableCell>
+            {overview.invoices.map((invoice) => (
+              <TableRow key={invoice.id}>
+                <TableCell>{invoice.id}</TableCell>
                 <TableCell>
-                  <Badge status="Paid" />
+                  {new Date(invoice.issuedAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell>{invoice.plan?.name ?? "Subscription"}</TableCell>
+                <TableCell>
+                  {money(invoice.amount, data.settings.currency)}
+                </TableCell>
+                <TableCell>
+                  <Badge status={invoice.status} />
                 </TableCell>
                 <TableCell>
                   <button
                     className="text-link"
                     onClick={() => {
                       exportCsv(
-                        `sample-invoice-${month}.csv`,
-                        ['Invoice', 'Date', 'Description', 'Amount', 'Status'],
+                        `invoice-${invoice.id}.csv`,
+                        ["Invoice", "Date", "Description", "Amount", "Status"],
                         [
                           [
-                            `INV-2026-${String(8 - i).padStart(3, '0')}`,
-                            `${month} 1, 2026`,
-                            'Sample Pro subscription',
-                            49,
-                            'Paid (demo)',
+                            invoice.id,
+                            invoice.issuedAt,
+                            invoice.plan?.name ?? "Subscription",
+                            invoice.amount,
+                            invoice.status,
                           ],
                         ],
                       );
-                      notify('Sample invoice downloaded.');
+                      notify("Invoice downloaded.");
                     }}
                   >
                     <Download size={13} />
@@ -1592,7 +1652,7 @@ export function BillingPage() {
 }
 export function SettingsPage() {
   const { data, save, pending } = useWorkspace();
-  const [section, setSection] = useState('Business profile');
+  const [section, setSection] = useState("Business profile");
   const [settings, setSettings] = useState({ ...data.settings });
   const change = (key: string, value: string | boolean) =>
     setSettings({ ...settings, [key]: value });
@@ -1604,11 +1664,11 @@ export function SettingsPage() {
       />
       <div className="settings-layout">
         <nav className="settings-nav" aria-label="Settings sections">
-          {['Business profile', 'Notifications', 'Booking preferences'].map(
+          {["Business profile", "Notifications", "Booking preferences"].map(
             (item) => (
               <button
                 key={item}
-                className={section === item ? 'active' : ''}
+                className={section === item ? "active" : ""}
                 onClick={() => setSection(item)}
               >
                 {item}
@@ -1636,7 +1696,7 @@ export function SettingsPage() {
             });
           }}
         >
-          {section === 'Business profile' && (
+          {section === "Business profile" && (
             <div className="card card-pad">
               <div className="card-head">
                 <div>
@@ -1653,7 +1713,7 @@ export function SettingsPage() {
                 <input
                   required
                   value={settings.name}
-                  onChange={(e) => change('name', e.target.value)}
+                  onChange={(e) => change("name", e.target.value)}
                 />
               </Field>
               <div className="field-grid">
@@ -1662,21 +1722,21 @@ export function SettingsPage() {
                     required
                     type="email"
                     value={settings.email}
-                    onChange={(e) => change('email', e.target.value)}
+                    onChange={(e) => change("email", e.target.value)}
                   />
                 </Field>
                 <Field label="Phone">
                   <input
                     type="tel"
-                    value={settings.phone ?? ''}
-                    onChange={(e) => change('phone', e.target.value)}
+                    value={settings.phone ?? ""}
+                    onChange={(e) => change("phone", e.target.value)}
                   />
                 </Field>
               </div>
               <Field label="Address">
                 <textarea
-                  value={settings.address ?? ''}
-                  onChange={(e) => change('address', e.target.value)}
+                  value={settings.address ?? ""}
+                  onChange={(e) => change("address", e.target.value)}
                 />
               </Field>
               <div className="field-grid">
@@ -1684,16 +1744,16 @@ export function SettingsPage() {
                   <input disabled value="USD · US Dollar" />
                 </Field>
                 <Field label="Timezone">
-                  <input disabled value="Asia/Yangon (GMT+6:30)" />
+                  <input disabled value={settings.timezone} />
                 </Field>
               </div>
               <p className="export-note">
-                The demo uses USD and Asia/Yangon consistently across bookings
-                and reports.
+                Currency and timezone settings apply consistently across
+                bookings and reports.
               </p>
             </div>
           )}
-          {section === 'Notifications' && (
+          {section === "Notifications" && (
             <div className="card card-pad">
               <h2>Customer notifications</h2>
               <p className="subtitle mb-6">
@@ -1701,15 +1761,15 @@ export function SettingsPage() {
               </p>
               {[
                 {
-                  key: 'confirmation',
-                  name: 'Booking confirmations',
+                  key: "confirmation",
+                  name: "Booking confirmations",
                   description:
-                    'Send a confirmation when an appointment is booked.',
+                    "Send a confirmation when an appointment is booked.",
                 },
                 {
-                  key: 'reminders',
-                  name: 'Appointment reminders',
-                  description: 'Send a reminder 24 hours before each visit.',
+                  key: "reminders",
+                  name: "Appointment reminders",
+                  description: "Send a reminder 24 hours before each visit.",
                 },
               ].map((item) => (
                 <div className="toggle-row" key={item.key}>
@@ -1719,18 +1779,17 @@ export function SettingsPage() {
                   </div>
                   <Switch
                     aria-label={item.name}
-                    checked={settings[item.key as 'confirmation' | 'reminders']}
+                    checked={settings[item.key as "confirmation" | "reminders"]}
                     onCheckedChange={(v) => change(item.key, v)}
                   />
                 </div>
               ))}
               <p className="export-note">
-                Preferences are saved for this demo session. No email or SMS is
-                sent.
+                Preferences are saved to the workspace. Email or SMS is sent.
               </p>
             </div>
           )}
-          {section === 'Booking preferences' && (
+          {section === "Booking preferences" && (
             <div className="card card-pad">
               <h2>Scheduling rules</h2>
               <p className="subtitle mb-6">
@@ -1738,16 +1797,16 @@ export function SettingsPage() {
               </p>
               {[
                 [
-                  'Service qualifications',
-                  'Appointments can only be assigned to qualified, active staff.',
+                  "Service qualifications",
+                  "Appointments can only be assigned to qualified, active staff.",
                 ],
                 [
-                  'Working hours & breaks',
-                  'Bookings must fit inside a staff member’s available hours.',
+                  "Working hours & breaks",
+                  "Bookings must fit inside a staff member’s available hours.",
                 ],
                 [
-                  'Double-booking prevention',
-                  'Overlapping appointments for the same staff member are blocked.',
+                  "Double-booking prevention",
+                  "Overlapping appointments for the same staff member are blocked.",
                 ],
               ].map(([name, text]) => (
                 <div className="list-row" key={name}>
@@ -1763,14 +1822,121 @@ export function SettingsPage() {
               </p>
             </div>
           )}
-          {section !== 'Booking preferences' && (
+          {section !== "Booking preferences" && (
             <div className="flex justify-end">
               <button className="btn primary" type="submit" disabled={pending}>
-                {pending ? 'Saving…' : 'Save changes'}
+                {pending ? "Saving…" : "Save changes"}
               </button>
             </div>
           )}
         </form>
+      </div>
+    </>
+  );
+}
+
+export function SupportPage() {
+  const { slug, notify } = useWorkspace();
+  const client = useQueryClient();
+  const query = useQuery({
+    queryKey: ["tenant-support", slug],
+    queryFn: () => getSupportTickets(slug),
+    enabled: Boolean(slug),
+  });
+  const [form, setForm] = useState({
+    subject: "",
+    category: "General",
+    priority: "NORMAL",
+    message: "",
+  });
+  const mutation = useMutation({
+    mutationFn: () => createSupportTicket(slug, form),
+    onSuccess: async () => {
+      setForm({
+        subject: "",
+        category: "General",
+        priority: "NORMAL",
+        message: "",
+      });
+      await client.invalidateQueries({ queryKey: ["tenant-support", slug] });
+      notify("Support ticket submitted.");
+    },
+  });
+  return (
+    <>
+      <PageHead
+        title="Support"
+        subtitle="Contact the platform team and follow every request."
+      />
+      <div className="two-col">
+        <form
+          className="card card-pad"
+          onSubmit={(event) => {
+            event.preventDefault();
+            mutation.mutate();
+          }}
+        >
+          <h2>New support ticket</h2>
+          <Field label="Subject">
+            <input
+              value={form.subject}
+              onChange={(e) => setForm({ ...form, subject: e.target.value })}
+              minLength={3}
+              required
+            />
+          </Field>
+          <Field label="Category">
+            <input
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              required
+            />
+          </Field>
+          <Field label="Priority">
+            <select
+              value={form.priority}
+              onChange={(e) => setForm({ ...form, priority: e.target.value })}
+            >
+              {["LOW", "NORMAL", "HIGH", "URGENT"].map((value) => (
+                <option key={value}>{value}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Message">
+            <textarea
+              value={form.message}
+              onChange={(e) => setForm({ ...form, message: e.target.value })}
+              minLength={10}
+              required
+            />
+          </Field>
+          <button className="btn primary" disabled={mutation.isPending}>
+            {mutation.isPending ? "Submitting…" : "Submit ticket"}
+          </button>
+        </form>
+        <div className="card card-pad">
+          <h2>Ticket history</h2>
+          {query.isLoading && <p>Loading tickets…</p>}
+          {query.isError && <p>Tickets could not be loaded.</p>}
+          {query.data?.map((ticket) => (
+            <div className="list-row" key={ticket.id}>
+              <div>
+                <h3>{ticket.subject}</h3>
+                <p>
+                  {ticket.category} ·{" "}
+                  {new Date(ticket.createdAt).toLocaleString()}
+                </p>
+              </div>
+              <Badge status={ticket.status} />
+            </div>
+          ))}
+          {!query.isLoading && !query.data?.length && (
+            <Empty
+              title="No support tickets"
+              description="Your submitted requests will appear here."
+            />
+          )}
+        </div>
       </div>
     </>
   );

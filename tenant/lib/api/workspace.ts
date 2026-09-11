@@ -1,9 +1,9 @@
-import { api } from './client';
-import type { Customer } from './customers';
-import type { Service } from './services';
-import type { Staff } from './staff';
-import type { Appointment } from './appointments';
-import type { Reward } from './rewards';
+import { api } from "./client";
+import type { Customer } from "./customers";
+import type { Service } from "./services";
+import type { Staff } from "./staff";
+import type { Appointment } from "./appointments";
+import type { Reward } from "./rewards";
 
 export type WorkspaceSettings = {
   name: string;
@@ -29,7 +29,7 @@ export type WorkspaceData = {
 };
 
 export const workspaceKey = (slug: string) =>
-  ['tenant', slug, 'workspace'] as const;
+  ["tenant", slug, "workspace"] as const;
 
 export async function getWorkspace(slug: string): Promise<WorkspaceData> {
   const res = await api.get<WorkspaceData>(`/tenants/${slug}/workspace`);

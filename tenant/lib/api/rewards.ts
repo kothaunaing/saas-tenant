@@ -1,4 +1,4 @@
-import { api, type PaginatedResult, type PaginationParams } from './client';
+import { api, type PaginatedResult, type PaginationParams } from "./client";
 
 export type Reward = {
   id: string;
@@ -24,7 +24,7 @@ export interface CreateRewardPayload {
 export type UpdateRewardPayload = Partial<CreateRewardPayload>;
 
 export const rewardsKey = (slug: string, params?: QueryRewardsParams) =>
-  ['tenant', slug, 'rewards', params] as const;
+  ["tenant", slug, "rewards", params] as const;
 
 export async function getRewards(
   slug: string,
@@ -37,10 +37,7 @@ export async function getRewards(
   return res.data;
 }
 
-export async function getReward(
-  slug: string,
-  id: string,
-): Promise<Reward> {
+export async function getReward(slug: string, id: string): Promise<Reward> {
   const res = await api.get<Reward>(`/tenants/${slug}/rewards/${id}`);
   return res.data;
 }

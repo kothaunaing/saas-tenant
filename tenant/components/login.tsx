@@ -1,7 +1,7 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Sparkles,
   LockKeyhole,
@@ -13,46 +13,59 @@ import {
   Loader2,
   Building2,
   ShieldCheck,
-} from 'lucide-react';
-import { login, logout, apiError } from '@/tenant/lib/api';
-import { useWorkspace } from '@/tenant/components/workspace-provider';
+} from "lucide-react";
+import { login, logout, apiError } from "@/tenant/lib/api";
+import { useWorkspace } from "@/tenant/components/workspace-provider";
 
 export default function LoginPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useWorkspace();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   // If already authenticated as TENANT_ADMIN, smoothly forward to dashboard
   useEffect(() => {
-    if (user && user.role === 'TENANT_ADMIN') {
-      router.replace('/');
+    if (user && user.role === "TENANT_ADMIN") {
+      router.replace("/");
     }
   }, [user, router]);
 
   async function submit(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!email.trim() || !password) {
-      setError('Please provide both your work email and password.');
+      setError("Please provide both your work email and password.");
       return;
     }
     setSaving(true);
-    setError('');
+    setError("");
     try {
       const authUser = await login(email.trim().toLowerCase(), password);
-      if (authUser.role !== 'TENANT_ADMIN') {
+      if (authUser.role !== "TENANT_ADMIN") {
         await logout();
-        throw new Error('Access denied. Please sign in with a salon admin account.');
+        const portalHint =
+          authUser.role === "CUSTOMER"
+            ? " Use the Customer Portal (localhost:3001) to book appointments."
+            : authUser.role === "PLATFORM_ADMIN"
+              ? " Use the Super Admin Console (localhost:3002) instead."
+              : "";
+        throw new Error(
+          `Access denied. Please sign in with a salon admin account.${portalHint}`,
+        );
       }
-      await queryClient.invalidateQueries({ queryKey: ['tenant-session'] });
-      router.replace('/');
+      await queryClient.invalidateQueries({ queryKey: ["tenant-session"] });
+      router.replace("/");
     } catch (cause) {
-      setError(apiError(cause, 'Invalid credentials. Please verify your email and password.'));
+      setError(
+        apiError(
+          cause,
+          "Invalid credentials. Please verify your email and password.",
+        ),
+      );
     } finally {
       setSaving(false);
     }
@@ -79,7 +92,8 @@ export default function LoginPage() {
               </div>
               <h1 className="tenant-login-title">Welcome back</h1>
               <p className="tenant-login-sub">
-                Sign in to manage your appointments, staff, and customer bookings.
+                Sign in to manage your appointments, staff, and customer
+                bookings.
               </p>
             </div>
           </div>
@@ -118,7 +132,7 @@ export default function LoginPage() {
                 </span>
                 <input
                   id="tenant-password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   placeholder="••••••••••••"
@@ -129,7 +143,7 @@ export default function LoginPage() {
                   type="button"
                   className="password-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -165,7 +179,7 @@ export default function LoginPage() {
 
           <div className="login-card-footer">
             <p className="login-portal-switch">
-              Looking for client booking?{' '}
+              Looking for client booking?{" "}
               <a
                 href="http://localhost:3001"
                 className="switch-link"
@@ -173,6 +187,15 @@ export default function LoginPage() {
                 rel="noreferrer"
               >
                 Customer Portal →
+              </a>
+              {" | "}
+              <a
+                href="http://localhost:3002"
+                className="switch-link"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Super Admin Console →
               </a>
             </p>
             <div className="login-security-tag">
