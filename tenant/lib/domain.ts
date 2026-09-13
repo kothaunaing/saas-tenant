@@ -18,3 +18,11 @@ export const initials = (name: string) =>
     .join("");
 export const duration = (mins: number) =>
   `${Math.floor(mins / 60) ? `${Math.floor(mins / 60)} hr` : ""}${mins % 60 ? ` ${mins % 60} min` : ""}`.trim();
+
+export const slugify = (text: string): string =>
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+

@@ -12,16 +12,20 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (reduceMotion) return;
-    const elements = root?.querySelectorAll(
+    if (reduceMotion || !root) return;
+    const elements = root.querySelectorAll(
       "main > header, main > section, main > article, main > form, .page-head, .stat-card, .content-card, .data-table",
     );
-    if (!elements?.length) return;
-    animate(
-      elements,
-      { opacity: [0, 1], y: [7, 0] },
-      { duration: 0.34, delay: stagger(0.035, { startDelay: 0.06 }), ease: formalEase },
-    );
+    if (!elements.length) return;
+    try {
+      animate(
+        Array.from(elements),
+        { opacity: [0, 1], y: [7, 0] },
+        { duration: 0.34, delay: stagger(0.035, { startDelay: 0.06 }), ease: formalEase },
+      );
+    } catch {
+      // Ignore animation errors during fast route transitions
+    }
   }, [pathname, reduceMotion, root]);
 
   return (

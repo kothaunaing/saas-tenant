@@ -51,6 +51,7 @@ export type TenantRegistration = {
   phone?: string;
   address?: string;
   city?: string;
+  planId?: string;
 };
 
 export async function registerTenant(payload: TenantRegistration) {
