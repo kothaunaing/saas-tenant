@@ -214,8 +214,8 @@ export default function TenantRegister() {
       <div className="login-ambient-orb orb-2" aria-hidden="true" />
       <div className="login-grid-overlay" aria-hidden="true" />
 
-      <div className="tenant-register-container">
-        <div className="tenant-register-card">
+      <div className="tenant-login-container tenant-register-container">
+        <div className="tenant-login-card tenant-register-card">
           {/* Header */}
           <div className="register-header">
             <div className="login-logo-mark">
@@ -281,7 +281,7 @@ export default function TenantRegister() {
             </div>
           ) : (
             /* Registration Form */
-            <form className="tenant-register-form" onSubmit={submit} noValidate>
+            <form className="tenant-login-form tenant-register-form" onSubmit={submit} noValidate>
               {/* Section 1: Business details */}
               <div className="register-form-section">
                 <div className="section-label-group">
