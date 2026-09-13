@@ -279,7 +279,7 @@ export function Overview({ edit, go }: Props) {
         />
         <div className="table-footer">
           <span>{today.length} appointments today</span>
-          <span>All times in {data.settings.timezone}</span>
+          <span>All times use the platform clock</span>
         </div>
       </div>
       <p className="bottom-note">Made for moments of care.</p>
@@ -1689,7 +1689,6 @@ export function SettingsPage() {
                 phone: settings.phone,
                 address: settings.address,
                 currency: settings.currency,
-                timezone: settings.timezone,
                 confirmation: settings.confirmation,
                 reminders: settings.reminders,
               },
@@ -1739,16 +1738,13 @@ export function SettingsPage() {
                   onChange={(e) => change("address", e.target.value)}
                 />
               </Field>
-              <div className="field-grid">
+              <div>
                 <Field label="Currency">
                   <input disabled value="USD · US Dollar" />
                 </Field>
-                <Field label="Timezone">
-                  <input disabled value={settings.timezone} />
-                </Field>
               </div>
               <p className="export-note">
-                Currency and timezone settings apply consistently across
+                Currency settings apply consistently across
                 bookings and reports.
               </p>
             </div>

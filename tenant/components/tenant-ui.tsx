@@ -143,7 +143,7 @@ export function Choice({
 }: {
   value: string;
   onChange: (value: string) => void;
-  options: (string | { value: string; label: string })[];
+  options: (string | { value: string; label: string; disabled?: boolean })[];
   label: string;
   className?: string;
 }) {
@@ -166,7 +166,7 @@ export function Choice({
       </SelectTrigger>
       <SelectContent>
         {opts.map((o) => (
-          <SelectItem key={o.value} value={o.value}>
+          <SelectItem key={o.value} value={o.value} disabled={o.disabled}>
             {o.label}
           </SelectItem>
         ))}

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Sparkles,
@@ -178,6 +179,9 @@ export default function LoginPage() {
           </form>
 
           <div className="login-card-footer">
+            <p className="login-portal-switch">
+              New business? <Link href="/register" className="switch-link">Register your salon →</Link>
+            </p>
             <p className="login-portal-switch">
               Looking for client booking?{" "}
               <a

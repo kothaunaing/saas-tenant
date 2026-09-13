@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import WorkspaceProvider from "@/tenant/components/workspace-provider";
+import { MotionProvider } from "@/tenant/components/motion-provider";
 export const metadata: Metadata = {
   title: "Serenity | Salon workspace",
   icons: { icon: "/favicon.svg" },
@@ -15,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <WorkspaceProvider>{children}</WorkspaceProvider>
+        <WorkspaceProvider><MotionProvider>{children}</MotionProvider></WorkspaceProvider>
       </body>
     </html>
   );

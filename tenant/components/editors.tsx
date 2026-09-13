@@ -180,6 +180,23 @@ export default function EditorSheet({
   const available = data.staff.filter(
     (s) => s.active && s.services.includes(booking.serviceId),
   );
+  const staffOptions = available.map((member) => {
+    const unavailable = Boolean(
+      booking.date &&
+        booking.time &&
+        bookingError(
+          { ...booking, staffId: member.id },
+          data.appointments,
+          data.staff,
+          data.services,
+        ),
+    );
+    return {
+      value: member.id,
+      label: `${member.name}${unavailable ? " · Unavailable" : ""}`,
+      disabled: unavailable,
+    };
+  });
   return (
     <Sheet
       open
@@ -581,7 +598,7 @@ export default function EditorSheet({
                     onChange={(staffId) => setBooking({ ...booking, staffId })}
                     options={[
                       { value: "", label: "Choose a qualified team member" },
-                      ...available.map((s) => ({ value: s.id, label: s.name })),
+                      ...staffOptions,
                     ]}
                     label="Team member"
                     className="w-full"
@@ -599,7 +616,7 @@ export default function EditorSheet({
                       type="date"
                       value={booking.date}
                       onChange={(e) =>
-                        setBooking({ ...booking, date: e.target.value })
+                        setBooking({ ...booking, date: e.target.value, staffId: "" })
                       }
                     />
                   </Field>
@@ -609,7 +626,7 @@ export default function EditorSheet({
                       type="time"
                       value={booking.time}
                       onChange={(e) =>
-                        setBooking({ ...booking, time: e.target.value })
+                        setBooking({ ...booking, time: e.target.value, staffId: "" })
                       }
                     />
                   </Field>

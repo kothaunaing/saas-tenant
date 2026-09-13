@@ -28,3 +28,31 @@ export async function getMe(): Promise<AuthUser> {
   const res = await api.get<AuthUser>("/auth/me");
   return res.data;
 }
+
+export type RegistrationPlan = {
+  id: string;
+  name: string;
+  price: number;
+  interval: string;
+  staffLimit: number | null;
+  features: string[];
+};
+
+export async function getRegistrationPlans(): Promise<RegistrationPlan[]> {
+  return (await api.get<RegistrationPlan[]>("/auth/registration/plans")).data;
+}
+
+export type TenantRegistration = {
+  businessName: string;
+  ownerName: string;
+  slug: string;
+  email: string;
+  password: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+};
+
+export async function registerTenant(payload: TenantRegistration) {
+  return (await api.post("/auth/register/tenant", payload)).data;
+}

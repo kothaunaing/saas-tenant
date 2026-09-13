@@ -24,6 +24,7 @@ import {
 } from "@/tenant/lib/api";
 import { CheckCircle2, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import { isPublicAuthRoute } from "@/tenant/lib/auth-routes";
 
 type Context = {
   data: WorkspaceData;
@@ -49,7 +50,6 @@ const EMPTY: WorkspaceData = {
     phone: null,
     address: null,
     currency: "USD",
-    timezone: "UTC",
     confirmation: true,
     reminders: true,
     loyalty: false,
@@ -79,7 +79,7 @@ function DataProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (
-      pathname !== "/login" &&
+      !isPublicAuthRoute(pathname) &&
       !authLoading &&
       (authError || (user && user.role !== "TENANT_ADMIN"))
     ) {
@@ -96,7 +96,7 @@ function DataProvider({ children }: { children: React.ReactNode }) {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: WorkspaceData) => saveWorkspace(slug, data),
+    mutationFn: (data: WorkspaceData) => saveWorkspace(slug, workspace, data),
     onSuccess: (updated) => client.setQueryData(workspaceKey(slug), updated),
   });
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isPublicAuthRoute } from './tenant/lib/auth-routes';
 
 /**
  * Edge proxy for the Tenant Dashboard (saas-tenant).
@@ -22,7 +23,7 @@ export function proxy(request: NextRequest) {
   );
 
   // Unauthenticated on any protected route → /login
-  if (pathname !== '/login' && !authenticated) {
+  if (!isPublicAuthRoute(pathname) && !authenticated) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
