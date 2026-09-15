@@ -517,7 +517,7 @@ export default function EditorSheet({
                       }
                     />
                   </Field>
-                  <Field label="Price (USD)">
+                  <Field label="Price (Ks)">
                     <input
                       required
                       type="number"

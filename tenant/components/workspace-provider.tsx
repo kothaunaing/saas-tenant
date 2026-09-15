@@ -49,7 +49,7 @@ const EMPTY: WorkspaceData = {
     email: "",
     phone: null,
     address: null,
-    currency: "USD",
+    currency: "MMK",
     confirmation: true,
     reminders: true,
     loyalty: false,

@@ -1235,7 +1235,7 @@ export function LoyaltyPage({ edit }: Props) {
           icon={Sparkles}
         />
         <Stat
-          label="Points per $1"
+          label="Points per Ks 1"
           value={data.settings.pointsPerDollar}
           icon={DollarSign}
         />
@@ -1277,7 +1277,7 @@ export function LoyaltyPage({ edit }: Props) {
             value={rate}
             onChange={(e) => setRate(Number(e.target.value))}
           />
-          <span className="text-xs muted">points for every $1 spent.</span>
+          <span className="text-xs muted">points for every Ks 1 spent.</span>
           <button className="btn small" type="submit">
             Save rule
           </button>
@@ -1434,7 +1434,7 @@ export function BillingPage() {
               )}
             </div>
             <div className="plan-price">
-              ${plan.price}
+              {money(plan.price)}
               <small> / month</small>
             </div>
             <ul>
@@ -1740,7 +1740,7 @@ export function SettingsPage() {
               </Field>
               <div>
                 <Field label="Currency">
-                  <input disabled value="USD · US Dollar" />
+                  <input disabled value="Ks · Myanmar Kyat (MMK)" />
                 </Field>
               </div>
               <p className="export-note">

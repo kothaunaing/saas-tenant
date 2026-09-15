@@ -226,7 +226,7 @@ export function RevenueChart({
         <span>{money(max)}</span>
         <span>{money(max * 0.66)}</span>
         <span>{money(max * 0.33)}</span>
-        <span>$0</span>
+        <span>{money(0)}</span>
       </div>
       <div className="chart-main">
         <svg

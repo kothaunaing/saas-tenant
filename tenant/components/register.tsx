@@ -31,7 +31,7 @@ import {
   type RegistrationPlan,
   type TenantRegistration,
 } from "@/tenant/lib/api";
-import { slugify } from "@/tenant/lib/domain";
+import { money, slugify } from "@/tenant/lib/domain";
 
 export default function TenantRegister() {
   const router = useRouter();
@@ -260,7 +260,7 @@ export default function TenantRegister() {
                 <div className="summary-row">
                   <span className="summary-label">Selected Plan:</span>
                   <span className="summary-val">
-                    {selectedPlan.name} ({selectedPlan.price === 0 ? "Free Trial" : `$${selectedPlan.price}/${selectedPlan.interval}`})
+                    {selectedPlan.name} ({selectedPlan.price === 0 ? "Free Trial" : `${money(selectedPlan.price)}/${selectedPlan.interval}`})
                   </span>
                 </div>
               </div>
@@ -507,19 +507,12 @@ export default function TenantRegister() {
                 <div className="register-plans-grid">
                   {allSelectablePlans.map((plan) => {
                     const isSelected = selectedPlanId === plan.id;
-                    const isTrial = plan.id === "trial";
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={plan.id}
-                        role="button"
-                        tabIndex={0}
                         className={`register-plan-card ${isSelected ? "selected" : ""}`}
                         onClick={() => setSelectedPlanId(plan.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            setSelectedPlanId(plan.id);
-                          }
-                        }}
                       >
                         {isSelected && (
                           <div className="plan-check-icon">
@@ -537,13 +530,13 @@ export default function TenantRegister() {
                             "Free"
                           ) : (
                             <>
-                              ${plan.price}
+                              {money(plan.price)}
                               <small>/{plan.interval}</small>
                             </>
                           )}
                         </div>
                         <span className="plan-meta">{plan.description}</span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -559,7 +552,7 @@ export default function TenantRegister() {
                   <div className="plan-trial-notice">
                     <Sparkles size={14} className="notice-icon" />
                     <span>
-                      Selected <b>{selectedPlan.name} Plan</b> (${selectedPlan.price}/{selectedPlan.interval}). Full access starts immediately.
+                      Selected <b>{selectedPlan.name} Plan</b> ({money(selectedPlan.price)}/{selectedPlan.interval}). Full access starts immediately.
                     </span>
                   </div>
                 )}

@@ -8,8 +8,10 @@ export const workingHours = (): WorkDay[] =>
     end: "18:00",
     breaks: [],
   }));
-export const money = (value: number, currency = "USD") =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
+export const money = (value: number, currency = "MMK") =>
+  currency === "MMK"
+    ? `Ks ${new Intl.NumberFormat("en-MM").format(value)}`
+    : new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
 export const initials = (name: string) =>
   name
     .split(" ")
